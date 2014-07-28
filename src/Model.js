@@ -83,6 +83,7 @@ define(
                  * @param {Mixed} newValue 变化后的值
                  */
                 this.fire('change', event);
+                this.fire('change:' + name, event);
             }
 
             return value;
@@ -144,6 +145,7 @@ define(
                     newValue: undefined
                 };
                 this.fire('change', event);
+                this.fire('change:' + name, event);
             }
 
             return oldValue;
