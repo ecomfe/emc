@@ -38,10 +38,10 @@ define(
          */
         exports.get = function (name) {
             if (!this.store) {
-                throw new Error('This model has already disposed');
+                throw new Error('This model is disposed');
             }
 
-            return this.store[name];
+            return this.store.hasOwnProperty(name) ? this.store[name] : undefined;
         };
 
         /**
@@ -56,7 +56,7 @@ define(
          */
         exports.set = function (name, value, options) {
             if (!this.store) {
-                throw new Error('This model has already disposed');
+                throw new Error('This model is disposed');
             }
 
             options = options || EMPTY;
@@ -100,7 +100,7 @@ define(
          */
         exports.fill = function (extension, options) {
             if (!this.store) {
-                throw new Error('This model has already disposed');
+                throw new Error('This model is disposed');
             }
 
             for (var name in extension) {
@@ -123,7 +123,7 @@ define(
          */
         exports.remove = function (name, options) {
             if (!this.store) {
-                throw new Error('This model has already disposed');
+                throw new Error('This model is disposed');
             }
 
             // 如果原来就没这个值，就不触发`change`事件了

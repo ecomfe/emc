@@ -28,6 +28,25 @@ define(
                 });
             });
 
+            describe('get method', function () {
+                it('should return the property value', function () {
+                    var model = new Model({ x: 1 });
+                    expect(model.get('x')).toBe(1);
+                });
+
+                it('should return undefined if property does not exist', function () {
+                    var model = new Model();
+                    expect(model.get('x')).toBeUndefined();
+                });
+
+                it('should not read properties on Object.prototype', function () {
+                    Object.prototype.x = 1;
+                    var model = new Model();
+                    expect(model.get('x')).toBeUndefined();
+                    delete Object.prototype.x;
+                });
+            });
+
             describe('set method', function () {
                 it('should change the value of a property', function () {
                     var model = new Model();
@@ -115,6 +134,14 @@ define(
                     var extension = { x: 1, y: 2 };
                     var returnValue = model.fill(extension);
                     expect(returnValue).toBe(extension);
+                });
+
+                it('should not include properties on prototype chain', function () {
+                    Object.prototype.x = 1;
+                    var model = new Model();
+                    model.fill({});
+                    expect(model.get('x')).toBeUndefined();
+                    delete Object.prototype.x;
                 });
 
                 it('should fire change event for every property change', function () {
@@ -218,6 +245,14 @@ define(
                     var dumpValue = model.dump();
                     dumpValue.x = 2;
                     expect(model.get('x')).toBe(1);
+                });
+
+                it('should not dump properties on prototype chain', function () {
+                    Object.prototype.x = 1;
+                    var model = new Model();
+                    var dumpValue = model.dump();
+                    delete Object.prototype.x;
+                    expect(model.x).toBeUndefined();
                 });
             });
 
