@@ -9,6 +9,9 @@
     "repository": "https://github.com/ecomfe/emc",
     "license": "BSD",
     "readme": "README.md",
+    "scripts": {
+        "test": "edp test start"
+    },
     "edp": {
         "wwwroot": "/",
         "depDir": "dep",

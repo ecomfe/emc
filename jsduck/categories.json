@@ -1,0 +1,13 @@
+[
+    {
+        "name": "EMC",
+        "groups": [
+            {
+                "name": "组件",
+                "classes": [
+                    "Model"
+                ]
+            }
+        ]
+    }
+]
