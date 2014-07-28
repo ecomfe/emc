@@ -237,7 +237,7 @@ define(
         };
 
         /**
-         * 销毁当前{@link Model}对象，会尝试停止所有正在加载的数据
+         * 销毁当前{@link Model}对象
          */
         exports.dispose = function () {
             this.store = null;
