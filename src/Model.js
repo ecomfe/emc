@@ -41,6 +41,10 @@ define(
                 throw new Error('This model is disposed');
             }
 
+            if (!name) {
+                throw new Error('Argument name is not provided');
+            }
+
             return this.store.hasOwnProperty(name) ? this.store[name] : undefined;
         };
 
@@ -57,6 +61,10 @@ define(
         exports.set = function (name, value, options) {
             if (!this.store) {
                 throw new Error('This model is disposed');
+            }
+
+            if (!name) {
+                throw new Error('Argument name is not provided');
             }
 
             options = options || EMPTY;
@@ -103,6 +111,10 @@ define(
                 throw new Error('This model is disposed');
             }
 
+            if (!extension) {
+                throw new Error('Argument extension is not provided');
+            }
+
             for (var name in extension) {
                 if (extension.hasOwnProperty(name)) {
                     this.set(name, extension[name], options);
@@ -124,6 +136,10 @@ define(
         exports.remove = function (name, options) {
             if (!this.store) {
                 throw new Error('This model is disposed');
+            }
+
+            if (!name) {
+                throw new Error('Argument name is not provided');
             }
 
             // 如果原来就没这个值，就不触发`change`事件了
@@ -190,6 +206,10 @@ define(
          * @return {boolean}
          */
         exports.has = function (name) {
+            if (!name) {
+                throw new Error('Argument name is not provided');
+            }
+
             if (!this.store) {
                 return false;
             }
@@ -204,6 +224,10 @@ define(
          * @return {boolean}
          */
         exports.hasValue = function (name) {
+            if (!name) {
+                throw new Error('Argument name is not provided');
+            }
+
             if (!this.store) {
                 return false;
             }
@@ -220,6 +244,10 @@ define(
          * @return {boolean}
          */
         exports.hasReadableValue = function (name) {
+            if (!name) {
+                throw new Error('Argument name is not provided');
+            }
+
             if (!this.store) {
                 return false;
             }

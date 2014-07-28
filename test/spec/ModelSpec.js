@@ -45,6 +45,13 @@ define(
                     expect(model.get('x')).toBeUndefined();
                     delete Object.prototype.x;
                 });
+
+                it('should throw if name is not provided', function () {
+                    var model = new Model();
+                    expect(function () { model.get(); }).toThrow();
+                    expect(function () { model.get(undefined); }).toThrow();
+                    expect(function () { model.get(null); }).toThrow();
+                });
             });
 
             describe('set method', function () {
@@ -58,6 +65,12 @@ define(
                     var model = new Model();
                     var returnValue = model.set('x', 1);
                     expect(returnValue).toBe(1);
+                });
+
+                it('should throw if name is not provided', function () {
+                    var model = new Model();
+                    expect(function () { model.set(undefined, 1); }).toThrow();
+                    expect(function () { model.set(null, 1); }).toThrow();
                 });
 
                 it('should fire change event when change a property', function () {
@@ -136,6 +149,13 @@ define(
                     expect(returnValue).toBe(extension);
                 });
 
+                it('should throw if extension is not provided', function () {
+                    var model = new Model();
+                    expect(function () { model.fill(); }).toThrow();
+                    expect(function () { model.fill(undefined); }).toThrow();
+                    expect(function () { model.fill(null); }).toThrow();
+                });
+
                 it('should not include properties on prototype chain', function () {
                     Object.prototype.x = 1;
                     var model = new Model();
@@ -172,6 +192,20 @@ define(
                     model.set('x', 1);
                     model.remove('x');
                     expect(model.get('x')).toBeUndefined();
+                });
+
+                it('should return the old value of the property', function () {
+                    var model = new Model();
+                    model.set('x', 1);
+                    var oldValue = model.remove('x');
+                    expect(oldValue).toBe(1);
+                });
+
+                it('should throw if name is not provided', function () {
+                    var model = new Model();
+                    expect(function () { model.remove(); }).toThrow();
+                    expect(function () { model.remove(undefined); }).toThrow();
+                    expect(function () { model.remove(null); }).toThrow();
                 });
 
                 it('should fire change event if property previously has a value', function () {
@@ -291,6 +325,13 @@ define(
                     var yModel = model.getAsModel('y');
                     expect(yModel.dump()).toEqual({});
                 });
+
+                it('should throw if name is not provided', function () {
+                    var model = new Model();
+                    expect(function () { model.getAsModel(); }).toThrow();
+                    expect(function () { model.getAsModel(undefined); }).toThrow();
+                    expect(function () { model.getAsModel(null); }).toThrow();
+                });
             });
 
             describe('has* method', function () {
@@ -301,6 +342,19 @@ define(
                     expect(model.has('x')).toBe(true);
                     expect(model.has('y')).toBe(true);
                     expect(model.has('z')).toBe(false);
+                });
+
+                it('should throw if name is not provided', function () {
+                    var model = new Model();
+                    expect(function () { model.has(); }).toThrow();
+                    expect(function () { model.has(undefined); }).toThrow();
+                    expect(function () { model.has(null); }).toThrow();
+                    expect(function () { model.hasValue(); }).toThrow();
+                    expect(function () { model.hasValue(undefined); }).toThrow();
+                    expect(function () { model.hasValue(null); }).toThrow();
+                    expect(function () { model.hasReadableValue(); }).toThrow();
+                    expect(function () { model.hasReadableValue(undefined); }).toThrow();
+                    expect(function () { model.hasReadableValue(null); }).toThrow();
                 });
 
                 it('should determine whether a property has a non-null value by hasValue method', function () {
