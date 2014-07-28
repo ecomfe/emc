@@ -90,6 +90,15 @@ define(
                     model.set('x', 1);
                     expect(change).not.toHaveBeenCalled();
                 });
+
+                it('should not fire change event if silent flag is explicitly set', function () {
+                    var model = new Model();
+                    var change = jasmine.createSpy('change');
+                    model.set('x', 1);
+                    model.on('change', change);
+                    model.set('x', 2, { silent: true });
+                    expect(change).not.toHaveBeenCalled();
+                });
             });
 
             describe('fill method', function () {
@@ -182,6 +191,15 @@ define(
                     var change = jasmine.createSpy('change');
                     model.on('change', change);
                     model.remove('x');
+                    expect(change).not.toHaveBeenCalled();
+                });
+
+                it('should not fire change event if silent flag is explicitly set', function () {
+                    var model = new Model();
+                    model.set('x', 1);
+                    var change = jasmine.createSpy('change');
+                    model.on('change', change);
+                    model.remove('x', { silent: true });
                     expect(change).not.toHaveBeenCalled();
                 });
             });
