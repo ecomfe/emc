@@ -256,6 +256,10 @@ define(
          * @return {Model} 克隆后的新{@link Model}对象
          */
         exports.clone = function () {
+            if (!this.store) {
+                throw new Error('This model is disposed');
+            }
+
             return new Model(this.store);
         };
 

@@ -377,6 +377,13 @@ define(
                     expect(function () { model.fill({}); }).toThrow();
                     expect(function () { model.remove('x'); }).toThrow();
                     expect(function () { model.getAsModel('x'); }).toThrow();
+                    expect(function () { model.clone(); }).toThrow();
+                });
+
+                it('should have no side effect when dispose multiple times', function () {
+                    var model = new Model();
+                    model.dispose();
+                    expect(function () { model.dispose(); }).not.toThrow();
                 });
 
                 it('should always dump an empty object after dispose', function () {
