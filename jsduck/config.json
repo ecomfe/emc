@@ -1,0 +1,9 @@
+{
+    "--title": "EMC",
+    "--output": "../doc/api",
+    "--categories": "categories.json",
+    "--external": "mini-event.EventTarget, mini-event.Event",
+    "--": [
+        "../src/Collection.js"
+    ]
+}

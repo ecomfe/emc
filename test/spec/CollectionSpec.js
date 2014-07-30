@@ -26,6 +26,12 @@ define(
                     array.push(3);
                     expect(collection.get(2)).toBeUndefined();
                 });
+
+                it('should throw if a non-array object is given', function () {
+                    expect(function () { new Collection({}); }).toThrow();
+                    expect(function () { new Collection(true); }).toThrow();
+                    expect(function () { new Collection(1); }).toThrow();
+                });
             });
 
             describe('get method', function () {
@@ -45,7 +51,7 @@ define(
 
                 it('should calculate index from the end if index is negative', function () {
                     var collection = new Collection([1, 2]);
-                    expect(collection.get(-1)).toBe(1);
+                    expect(collection.get(-1)).toBe(2);
                 });
 
                 it('should return undefined if negative index is out of range', function () {
@@ -63,8 +69,6 @@ define(
                 it('should throw if index cannot convert to a number', function () {
                     var collection = new Collection();
                     expect(function () { collection.get({}); }).toThrow();
-                    expect(function () { collection.get([]); }).toThrow();
-                    expect(function () { collection.get(true); }).toThrow();
                     expect(function () { collection.get(Object); }).toThrow();
                     expect(function () { collection.get(/reg exp/); }).toThrow();
                     expect(function () { collection.get('string'); }).toThrow();
@@ -130,7 +134,7 @@ define(
                     var collection = new Collection([1, 2]);
                     collection.insert(5, 3);
                     expect(collection.length).toBe(3);
-                    expect(collection.get(3)).toBe(3);
+                    expect(collection.get(2)).toBe(3);
                 });
 
                 it('should calculate index from the end if index is negative', function () {
@@ -183,8 +187,6 @@ define(
                 it('should throw if index cannot convert to a number', function () {
                     var collection = new Collection();
                     expect(function () { collection.insert({}, 3); }).toThrow();
-                    expect(function () { collection.insert([], 3); }).toThrow();
-                    expect(function () { collection.insert(true, 3); }).toThrow();
                     expect(function () { collection.insert(Object, 3); }).toThrow();
                     expect(function () { collection.insert(/reg exp/, 3); }).toThrow();
                     expect(function () { collection.insert('string', 3); }).toThrow();
@@ -252,7 +254,7 @@ define(
                     var collection = new Collection([1, 2]);
                     collection.push(undefined);
                     expect(collection.length).toBe(3);
-                    expect(collection.get(0)).toBeUndefined();
+                    expect(collection.get(2)).toBeUndefined();
                 });
 
                 it('should fire add event', function () {
@@ -341,7 +343,7 @@ define(
                 it('should remove the item at given position', function () {
                     var collection = new Collection([1, 2]);
                     collection.removeAt(0);
-                    expect(collection.length).toBe(0);
+                    expect(collection.length).toBe(1);
                     expect(collection.get(0)).toBe(2);
                 });
 
@@ -353,13 +355,13 @@ define(
 
                 it('should calculate index from the end if index is negative', function () {
                     var collection = new Collection([1, 2]);
-                    collection.insert(-1);
-                    expect(collection.get(0)).toBe(2);
+                    collection.removeAt(-1);
+                    expect(collection.get(0)).toBe(1);
                 });
 
                 it('should remove the first item if negative index is out of range', function () {
                     var collection = new Collection([1, 2]);
-                    collection.insert(-5);
+                    collection.removeAt(-5);
                     expect(collection.get(0)).toBe(2);
                 });
 
@@ -372,14 +374,6 @@ define(
                     var eventObject = remove.mostRecentCall.args[0];
                     expect(eventObject.index).toBe(1);
                     expect(eventObject.item).toBe(2);
-                });
-
-                it('should not fire remove event if not item is removed', function () {
-                    var collection = new Collection([1, 2]);
-                    var remove = jasmine.createSpy('remove');
-                    collection.on('remove', remove);
-                    collection.removeAt(5);
-                    expect(remove).not.toHaveBeenCalled();
                 });
 
                 it('should not fire remove event if silent flag is explicitly set', function () {
@@ -398,8 +392,6 @@ define(
                 it('should throw if index cannot convert to a number', function () {
                     var collection = new Collection();
                     expect(function () { collection.removeAt({}); }).toThrow();
-                    expect(function () { collection.removeAt([]); }).toThrow();
-                    expect(function () { collection.removeAt(true); }).toThrow();
                     expect(function () { collection.removeAt(Object); }).toThrow();
                     expect(function () { collection.removeAt(/reg exp/); }).toThrow();
                     expect(function () { collection.removeAt('string'); }).toThrow();
@@ -411,7 +403,7 @@ define(
                     var collection = new Collection([1, 2]);
                     collection.shift();
                     expect(collection.length).toBe(1);
-                    expect(collection.get(1)).toBe(2);
+                    expect(collection.get(0)).toBe(2);
                 });
 
                 it('should return the removed item', function () {
@@ -455,11 +447,11 @@ define(
             });
 
             describe('pop method', function () {
-                it('should remove the first item', function () {
+                it('should remove the last item', function () {
                     var collection = new Collection([1, 2]);
                     collection.pop();
                     expect(collection.length).toBe(1);
-                    expect(collection.get(1)).toBe(1);
+                    expect(collection.get(0)).toBe(1);
                 });
 
                 it('should return the removed item', function () {
@@ -592,12 +584,13 @@ define(
                     expect(function () { collection.pop(); }).toThrow();
                     expect(function () { collection.unshift(); }).toThrow();
                     expect(function () { collection.clone(); }).toThrow();
+                    expect(function () { collection.indexOf(1); }).toThrow();
                 });
 
                 it('should have no side effect when dispose multiple times', function () {
-                    var model = new Model();
-                    model.dispose();
-                    expect(function () { model.dispose(); }).not.toThrow();
+                    var collection = new Collection();
+                    collection.dispose();
+                    expect(function () { collection.dispose(); }).not.toThrow();
                 });
 
                 it('should always dump an empty array after dispose', function () {
