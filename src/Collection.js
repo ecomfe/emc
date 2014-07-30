@@ -283,8 +283,7 @@ define(
                 throw new Error('This collection is disposed');
             }
 
-            var newStore = this.dump();
-            return new Collection(newStore);
+            return new Collection(this.store);
         };
 
         exports.dispose = function () {
