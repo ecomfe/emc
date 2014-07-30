@@ -61,16 +61,21 @@ define(
                     expect(model.get('x')).toBe(1);
                 });
 
-                it('should return the value', function () {
+                it('should accept undefined value', function () {
                     var model = new Model();
-                    var returnValue = model.set('x', 1);
-                    expect(returnValue).toBe(1);
+                    model.set('x', undefined);
+                    expect(model.get('x')).toBeUndefined();
                 });
 
                 it('should throw if name is not provided', function () {
                     var model = new Model();
                     expect(function () { model.set(undefined, 1); }).toThrow();
                     expect(function () { model.set(null, 1); }).toThrow();
+                });
+
+                it('should throw if value is not provided', function () {
+                    var model = new Model();
+                    expect(function () { model.set('x'); }).toThrow();
                 });
 
                 it('should fire change event when change a property', function () {
@@ -142,13 +147,6 @@ define(
                     expect(model.get('y')).toBe(2);
                 });
 
-                it('should return the extension object', function () {
-                    var model = new Model();
-                    var extension = { x: 1, y: 2 };
-                    var returnValue = model.fill(extension);
-                    expect(returnValue).toBe(extension);
-                });
-
                 it('should throw if extension is not provided', function () {
                     var model = new Model();
                     expect(function () { model.fill(); }).toThrow();
@@ -192,13 +190,6 @@ define(
                     model.set('x', 1);
                     model.remove('x');
                     expect(model.get('x')).toBeUndefined();
-                });
-
-                it('should return the old value of the property', function () {
-                    var model = new Model();
-                    model.set('x', 1);
-                    var oldValue = model.remove('x');
-                    expect(oldValue).toBe(1);
                 });
 
                 it('should throw if name is not provided', function () {
