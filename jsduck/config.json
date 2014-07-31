@@ -4,6 +4,7 @@
     "--categories": "categories.json",
     "--external": "mini-event.EventTarget, mini-event.Event",
     "--": [
-        "../src/Model.js"
+        "../src/Model.js",
+        "../src/Collection.js"
     ]
 }
