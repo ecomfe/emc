@@ -291,7 +291,9 @@ define(
                 throw new Error('This collection is disposed');
             }
 
-            // TODO: 添加对`item`的检验
+            if (!arguments.length) {
+                throw new Error('Argument item is not provided');
+            }
 
             startIndex = startIndex || 0;
 

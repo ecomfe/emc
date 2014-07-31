@@ -529,6 +529,11 @@ define(
                     var collection = new Collection([1, 2]);
                     expect(collection.indexOf(5, 1)).toBe(-1);
                 });
+
+                it('should throw if item is not provided', function () {
+                    var collection = new Collection([1, 2]);
+                    expect(function () { collection.indexOf(); }).toThrow();
+                });
             });
 
             describe('dump method', function () {
