@@ -19,6 +19,8 @@ define(
          * @extends mini-event.EventTarget
          * @param {Mixed[]} [items] 初始化的数据
          * @constructor
+         *
+         * @throws {Error} 提供的`items`参数不是数组
          */
         var exports = {};
 
@@ -36,6 +38,10 @@ define(
          *
          * @param {number} index 指定位置，如果为负数则从元素最后开始往前计算
          * @return {Mixed} 指定位置的元素，如果指定的位置超出集合范围，则返回`undefined`
+         *
+         * @throws {Error} 当前集合已经销毁
+         * @throws {Error} 未提供`index`参数
+         * @throws {Error} 提供的`index`参数无法转换为数字
          */
         exports.get = function (index) {
             if (!this.store) {
@@ -76,6 +82,11 @@ define(
          * @param {Mixed} item 需要添加的元素
          * @param {Object} [options] 相关选项
          * @param {boolean} [options.silent=false] 如果该值为`true`则不触发{@link Collection#event-add}事件
+         *
+         * @throws {Error} 当前集合已经销毁
+         * @throws {Error} 未提供`index`参数
+         * @throws {Error} 提供的`index`参数无法转换为数字
+         * @throws {Error} 未提供`item`参数
          */
         exports.insert = function (index, item, options) {
             if (!this.store) {
@@ -114,10 +125,15 @@ define(
         /**
          * 在指定位置添加一个元素，与{@link Collection#insert}方法相同
          *
-         * @param {Mixed} item 需要添加的元素，关于位置的计算参考{@link Collection#getValidIndex}
-         * @param {number} index 需要添加的位置
+         * @param {number} index 需要添加的位置，关于位置的计算参考{@link Collection#getValidIndex}
+         * @param {Mixed} item 需要添加的元素
          * @param {Object} [options] 相关选项
          * @param {boolean} [options.silent=false] 如果该值为`true`则不触发{@link Collection#event-add}事件
+         *
+         * @throws {Error} 当前集合已经销毁
+         * @throws {Error} 未提供`index`参数
+         * @throws {Error} 提供的`index`参数无法转换为数字
+         * @throws {Error} 未提供`item`参数
          */
         exports.addAt = exports.insert;
 
@@ -128,6 +144,9 @@ define(
          * @return {Mixed} 添加进去的元素
          * @param {Object} [options] 相关选项
          * @param {boolean} [options.silent=false] 如果该值为`true`则不触发{@link Collection#event-add}事件
+         *
+         * @throws {Error} 当前集合已经销毁
+         * @throws {Error} 未提供`item`参数
          */
         exports.add = function (item, options) {
             if (!arguments.length) {
@@ -143,6 +162,9 @@ define(
          * @param {Mixed} item 需要添加的元素
          * @param {Object} [options] 相关选项
          * @param {boolean} [options.silent=false] 如果该值为`true`则不触发{@link Collection#event-add}事件
+         *
+         * @throws {Error} 当前集合已经销毁
+         * @throws {Error} 未提供`item`参数
          */
         exports.push = exports.add;
 
@@ -151,6 +173,9 @@ define(
          * @param {Mixed} item 需要添加的元素
          * @param {Object} [options] 相关选项
          * @param {boolean} [options.silent=false] 如果该值为`true`则不触发{@link Collection#event-add}事件
+         *
+         * @throws {Error} 当前集合已经销毁
+         * @throws {Error} 未提供`item`参数
          */
         exports.unshift = function (item, options) {
             if (!arguments.length) {
@@ -166,6 +191,10 @@ define(
          * @param {number} index 需要移除的元素的位置，关于位置的计算参考{@link Collection#getValidIndex}
          * @param {Object} [options] 相关选项
          * @param {boolean} [options.silent=false] 如果该值为`true`则不触发{@link Collection#event-remove}事件
+         *
+         * @throws {Error} 当前集合已经销毁
+         * @throws {Error} 未提供`index`参数
+         * @throws {Error} 提供的`index`参数无法转换为数字
          */
         exports.removeAt = function (index, options) {
             if (!this.store) {
@@ -201,6 +230,8 @@ define(
          *
          * @param {Object} [options] 相关选项
          * @param {boolean} [options.silent=false] 如果该值为`true`则不触发{@link Collection#event-remove}事件
+         *
+         * @throws {Error} 当前集合已经销毁
          */
         exports.pop = function (options) {
             var lastItem = this.get(-1);
@@ -213,6 +244,8 @@ define(
          *
          * @param {Object} [options] 相关选项
          * @param {boolean} [options.silent=false] 如果该值为`true`则不触发{@link Collection#event-remove}事件
+         *
+         * @throws {Error} 当前集合已经销毁
          */
         exports.shift = function (options) {
             var firstItem = this.get(0);
@@ -226,6 +259,9 @@ define(
          * @param {Mixed} item 需要移除的元素
          * @param {Object} [options] 相关选项
          * @param {boolean} [options.silent=false] 如果该值为`true`则不触发{@link Collection#event-remove}事件
+         *
+         * @throws {Error} 当前集合已经销毁
+         * @throws {Error} 未提供`item`参数
          */
         exports.remove = function (item, options) {
             if (!arguments.length) {
@@ -245,11 +281,17 @@ define(
          * @param {Mixed} item 指定查找的元素
          * @param {number} [startIndex=0] 指定开始查找的位置，如果为负数则从最后位置往前计算，如果超出范围则不进行搜索返回`-1`
          * @return {number} 元素所在的位置，如果集合中从指定的位置开始未能找到元素则返回-1
+         *
+         * @throws {Error} 当前集合已经销毁
+         * @throws {Error} 未提供`item`参数
+         * @throws {Error} 提供的`startIndex`参数无法转换为数字
          */
         exports.indexOf = function (item, startIndex) {
             if (!this.store) {
                 throw new Error('This collection is disposed');
             }
+
+            // TODO: 添加对`item`的检验
 
             startIndex = startIndex || 0;
 
@@ -277,6 +319,8 @@ define(
          * 复制当前集合
          *
          * @return {Collection} 一个新的集合，包含当前集合的元素（及其顺序）
+         *
+         * @throws {Error} 当前集合已经销毁
          */
         exports.clone = function () {
             if (!this.store) {
@@ -303,6 +347,9 @@ define(
          * @param {number} index 输入的索引值
          * @return {number} 计算后的可用索引值
          * @protected
+         *
+         * @throws {Error} 未提供`index`参数
+         * @throws {Error} 提供的`index`参数无法转换为数字
          */
         exports.getValidIndex = function (index) {
             if (index == null) {
@@ -335,6 +382,8 @@ define(
          * @param {Object} [options] 相关选项
          * @param {boolean} [options.silent=false] 如果该值为`true`则不触发{@link Collection#event-add}事件
          * @private
+         *
+         * @throws {Error} 提供的`items`参数不是数组
          */
         exports.addArray = function (items, options) {
             if (typeof items.length !== 'number') {

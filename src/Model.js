@@ -35,6 +35,9 @@ define(
          *
          * @param {string} name 属性名
          * @return {Mixed} `name`对应的值
+         *
+         * @throws {Error} 当前对象已经销毁
+         * @throws {Error} 未提供`name`参数
          */
         exports.get = function (name) {
             if (!this.store) {
@@ -56,6 +59,10 @@ define(
          * @param {Object} [options] 相关选项
          * @param {boolean} [options.silent=false] 如果该值为`true`则不触发{@link Model#change}事件
          * @fires change
+         *
+         * @throws {Error} 当前对象已经销毁
+         * @throws {Error} 未提供`name`参数
+         * @throws {Error} 未提供`value`参数
          */
         exports.set = function (name, value, options) {
             if (!this.store) {
@@ -105,6 +112,9 @@ define(
          * @param {Object} [options] 相关选项
          * @param {boolean} [options.silent=false] 如果该值为`true`则不触发{@link Model#change}事件
          * @fires change
+         *
+         * @throws {Error} 当前对象已经销毁
+         * @throws {Error} 未提供`extension`参数
          */
         exports.fill = function (extension, options) {
             if (!this.store) {
@@ -129,6 +139,9 @@ define(
          * @param {Object} [options] 相关选项
          * @param {boolean} [options.silent=false] 如果该值为`true`则不触发{@link Model#change}事件
          * @fires change
+         *
+         * @throws {Error} 当前对象已经销毁
+         * @throws {Error} 未提供`name`参数
          */
         exports.remove = function (name, options) {
             if (!this.store) {
@@ -167,6 +180,9 @@ define(
          *
          * @param {string} name 属性名
          * @return {Model} `name`对应的值组装成的新的{@link Model}对象
+         *
+         * @throws {Error} 当前对象已经销毁
+         * @throws {Error} 未提供`name`参数
          */
         exports.getAsModel = function (name) {
             var value = this.get(name);
@@ -199,6 +215,8 @@ define(
          *
          * @param {string} name 属性名
          * @return {boolean}
+         *
+         * @throws {Error} 未提供`name`参数
          */
         exports.has = function (name) {
             if (!name) {
@@ -217,6 +235,8 @@ define(
          *
          * @param {string} name 属性名
          * @return {boolean}
+         *
+         * @throws {Error} 未提供`name`参数
          */
         exports.hasValue = function (name) {
             if (!name) {
@@ -237,6 +257,8 @@ define(
          *
          * @param {string} name 属性名
          * @return {boolean}
+         *
+         * @throws {Error} 未提供`name`参数
          */
         exports.hasReadableValue = function (name) {
             if (!name) {
@@ -254,6 +276,8 @@ define(
          * 克隆当前{@link Model}对象，产生一个新的{@link Model}对象
          *
          * @return {Model} 克隆后的新{@link Model}对象
+         *
+         * @throws {Error} 当前对象已经销毁
          */
         exports.clone = function () {
             if (!this.store) {
