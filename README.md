@@ -10,6 +10,7 @@ Model & Collection with well-designed change notification
 
 ## 文档
 
-1. 安装`jsduck`
-2. 支持`jsduck --config jsduck/config.json`
-3. 打开`doc/api/index.html`
+1. 安装`jsdoc`
+2. 进入项目根目录
+3. 运行`jsdoc -c doc/conf.json`
+4. 打开`doc/api/index.html`

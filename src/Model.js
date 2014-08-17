@@ -12,13 +12,12 @@ define(
         var SILENT = { silent: true };
 
         /**
-         * @class Model
-         *
          * 一个带有数据变更通知的对象
          *
+         * @class Model
          * @extends mini-event.EventTarget
+         *
          * @param {Object} [context] 初始化的数据
-         * @constructor
          */
         var exports = {};
 
@@ -33,8 +32,10 @@ define(
         /**
          * 获取对应键的值
          *
+         * @method Model#.get
+         *
          * @param {string} name 属性名
-         * @return {Mixed} `name`对应的值
+         * @return {*} `name`对应的值
          *
          * @throws {Error} 当前对象已经销毁
          * @throws {Error} 未提供`name`参数
@@ -54,10 +55,12 @@ define(
         /**
          * 设置值
          *
+         * @method Model#.set
+         *
          * @param {string} name 属性名
-         * @param {Mixed} value 对应的值
+         * @param {*} value 对应的值
          * @param {Object} [options] 相关选项
-         * @param {boolean} [options.silent=false] 如果该值为`true`则不触发{@link Model#change}事件
+         * @param {boolean} [options.silent=false] 如果该值为`true`则不触发{@link Model#.event:change|change事件}
          * @fires change
          *
          * @throws {Error} 当前对象已经销毁
@@ -91,14 +94,14 @@ define(
                     changeType: changeType
                 };
                 /**
-                 * @event change
-                 *
                  * 属性值发生变化时触发
+                 *
+                 * @event Model#.change
                  *
                  * @param {string} name 发生变化的属性的名称
                  * @param {string} changeType 变化的类型，取值为`"add"`、`"change"`或`"remove"`
-                 * @param {Mixed} oldValue 变化前的值
-                 * @param {Mixed} newValue 变化后的值
+                 * @param {*} oldValue 变化前的值
+                 * @param {*} newValue 变化后的值
                  */
                 this.fire('change', event);
                 this.fire('change:' + name, event);
@@ -108,9 +111,11 @@ define(
         /**
          * 批量设置值
          *
+         * @method Model#.fill
+         *
          * @param {Object} extension 批量值的存放对象
          * @param {Object} [options] 相关选项
-         * @param {boolean} [options.silent=false] 如果该值为`true`则不触发{@link Model#change}事件
+         * @param {boolean} [options.silent=false] 如果该值为`true`则不触发{@link Model#.event:change|change事件}
          * @fires change
          *
          * @throws {Error} 当前对象已经销毁
@@ -135,9 +140,11 @@ define(
         /**
          * 删除对应键的值
          *
+         * @method Model#.remove
+         *
          * @param {string} name 属性名
          * @param {Object} [options] 相关选项
-         * @param {boolean} [options.silent=false] 如果该值为`true`则不触发{@link Model#change}事件
+         * @param {boolean} [options.silent=false] 如果该值为`true`则不触发{@link Model#.event:change|change事件}
          * @fires change
          *
          * @throws {Error} 当前对象已经销毁
@@ -178,6 +185,8 @@ define(
         /**
          * 获取对应键的值并组装为一个新的{@link Model}对象后返回
          *
+         * @method Model#.getAsModel
+         *
          * @param {string} name 属性名
          * @return {Model} `name`对应的值组装成的新的{@link Model}对象
          *
@@ -197,6 +206,8 @@ define(
         /**
          * 将当前{@link Model}对象导出为一个普通的对象
          *
+         * @method Model#.dump
+         *
          * @return {Object} 一个普通的对象，修改该对象不会影响到当前{@link Model}对象
          */
         exports.dump = function () {
@@ -212,6 +223,8 @@ define(
 
         /**
          * 判断当前{@link Model}对象是否有指定的属性
+         *
+         * @method Model#.has
          *
          * @param {string} name 属性名
          * @return {boolean}
@@ -233,6 +246,8 @@ define(
         /**
          * 判断当前{@link Model}对象是否有指定的属性且值不为`null`或`undefined`
          *
+         * @method Model#.hasValue
+         *
          * @param {string} name 属性名
          * @return {boolean}
          *
@@ -252,8 +267,9 @@ define(
         };
 
         /**
-         * 判断当前{@link Model}对象是否有指定的属性
-         * 且值不为`null`、`undefined`或空字符串
+         * 判断当前{@link Model}对象是否有指定的属性且值不为`null`、`undefined`或空字符串
+         *
+         * @method Model#.hasReadableValue
          *
          * @param {string} name 属性名
          * @return {boolean}
@@ -275,6 +291,8 @@ define(
         /**
          * 克隆当前{@link Model}对象，产生一个新的{@link Model}对象
          *
+         * @method Model#.clone
+         *
          * @return {Model} 克隆后的新{@link Model}对象
          *
          * @throws {Error} 当前对象已经销毁
@@ -289,6 +307,8 @@ define(
 
         /**
          * 销毁当前{@link Model}对象
+         *
+         * @method Model#.dispose
          */
         exports.dispose = function () {
             this.store = null;
