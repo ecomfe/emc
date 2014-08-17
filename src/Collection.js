@@ -12,13 +12,12 @@ define(
         var SILENT = { silent: true };
 
         /**
-         * @class Collection
-         *
          * 一个带有集合变更通知的数组
          *
+         * @class Collection
          * @extends mini-event.EventTarget
-         * @param {Mixed[]} [items] 初始化的数据
-         * @constructor
+         *
+         * @param {Array} [items] 初始化的数据
          *
          * @throws {Error} 提供的`items`参数不是数组
          */
@@ -36,8 +35,10 @@ define(
         /**
          * 获取集合中指定位置上的元素
          *
+         * @method Collection#.get
+         *
          * @param {number} index 指定位置，如果为负数则从元素最后开始往前计算
-         * @return {Mixed} 指定位置的元素，如果指定的位置超出集合范围，则返回`undefined`
+         * @return {*} 指定位置的元素，如果指定的位置超出集合范围，则返回`undefined`
          *
          * @throws {Error} 当前集合已经销毁
          * @throws {Error} 未提供`index`参数
@@ -78,8 +79,10 @@ define(
         /**
          * 在指定位置添加一个元素
          *
+         * @method Collection#.insert
+         *
          * @param {number} index 需要添加的位置，关于位置的计算参考{@link Collection#getValidIndex}
-         * @param {Mixed} item 需要添加的元素
+         * @param {*} item 需要添加的元素
          * @param {Object} [options] 相关选项
          * @param {boolean} [options.silent=false] 如果该值为`true`则不触发{@link Collection#event-add}事件
          *
@@ -109,12 +112,12 @@ define(
 
             if (!options.silent) {
                 /**
-                 * @event add
-                 *
                  * 添加元素时触发
                  *
+                 * @event Collection#.add
+                 *
                  * @param {number} index 添加元素的位置
-                 * @param {Mixed} item 添加的元素
+                 * @param {*} item 添加的元素
                  */
                 this.fire('add', { index: index, item: item });
             }
@@ -125,10 +128,12 @@ define(
         /**
          * 在指定位置添加一个元素，与{@link Collection#insert}方法相同
          *
+         * @method Collection#.addAt
+         *
          * @param {number} index 需要添加的位置，关于位置的计算参考{@link Collection#getValidIndex}
-         * @param {Mixed} item 需要添加的元素
+         * @param {*} item 需要添加的元素
          * @param {Object} [options] 相关选项
-         * @param {boolean} [options.silent=false] 如果该值为`true`则不触发{@link Collection#event-add}事件
+         * @param {boolean} [options.silent=false] 如果该值为`true`则不触发{@link Collection#.event:add|add事件}
          *
          * @throws {Error} 当前集合已经销毁
          * @throws {Error} 未提供`index`参数
@@ -140,10 +145,11 @@ define(
         /**
          * 在当前集合的最后位置添加一个元素
          *
-         * @param {Mixed} item 需要添加的元素
-         * @return {Mixed} 添加进去的元素
+         * @method Collection#.add
+         *
+         * @param {*} item 需要添加的元素
          * @param {Object} [options] 相关选项
-         * @param {boolean} [options.silent=false] 如果该值为`true`则不触发{@link Collection#event-add}事件
+         * @param {boolean} [options.silent=false] 如果该值为`true`则不触发{@link Collection#.event:add|add事件}
          *
          * @throws {Error} 当前集合已经销毁
          * @throws {Error} 未提供`item`参数
@@ -157,11 +163,13 @@ define(
         };
 
         /**
-         * 在当前集合的最后位置添加一个元素，与{@link Collection#event-add}方法相同
+         * 在当前集合的最后位置添加一个元素，与{@link Collection#add}方法相同
          *
-         * @param {Mixed} item 需要添加的元素
+         * @method Collection#.push
+         *
+         * @param {*} item 需要添加的元素
          * @param {Object} [options] 相关选项
-         * @param {boolean} [options.silent=false] 如果该值为`true`则不触发{@link Collection#event-add}事件
+         * @param {boolean} [options.silent=false] 如果该值为`true`则不触发{@link Collection#.event:add|add事件}
          *
          * @throws {Error} 当前集合已经销毁
          * @throws {Error} 未提供`item`参数
@@ -170,9 +178,12 @@ define(
 
         /**
          * 在当前集合的最前位置添加一个元素
-         * @param {Mixed} item 需要添加的元素
+         *
+         * @method Collection#.unshift
+         *
+         * @param {*} item 需要添加的元素
          * @param {Object} [options] 相关选项
-         * @param {boolean} [options.silent=false] 如果该值为`true`则不触发{@link Collection#event-add}事件
+         * @param {boolean} [options.silent=false] 如果该值为`true`则不触发{@link Collection#.event:add|add事件}
          *
          * @throws {Error} 当前集合已经销毁
          * @throws {Error} 未提供`item`参数
@@ -188,9 +199,11 @@ define(
         /**
          * 从指定位置移除一个元素
          *
+         * @method Collection#.removeAdd
+         *
          * @param {number} index 需要移除的元素的位置，关于位置的计算参考{@link Collection#getValidIndex}
          * @param {Object} [options] 相关选项
-         * @param {boolean} [options.silent=false] 如果该值为`true`则不触发{@link Collection#event-remove}事件
+         * @param {boolean} [options.silent=false] 如果该值为`true`则不触发{@link Collection#.event:remove|remvoe事件}
          *
          * @throws {Error} 当前集合已经销毁
          * @throws {Error} 未提供`index`参数
@@ -214,12 +227,12 @@ define(
 
             if (!options.silent) {
                 /**
-                 * @event remove
-                 *
                  * 移除元素时触发
                  *
+                 * @event Collection#.remove
+                 *
                  * @param {number} index 移除元素的位置
-                 * @param {Mixed} item 移除的元素
+                 * @param {*} item 移除的元素
                  */
                 this.fire('remove', { index: actualIndex, item: removedItem });
             }
@@ -228,8 +241,10 @@ define(
         /**
          * 移除集合最后一个元素并返回
          *
+         * @method Collection#.pop
+         *
          * @param {Object} [options] 相关选项
-         * @param {boolean} [options.silent=false] 如果该值为`true`则不触发{@link Collection#event-remove}事件
+         * @param {boolean} [options.silent=false] 如果该值为`true`则不触发{@link Collection#.event:remove|remove事件}
          *
          * @throws {Error} 当前集合已经销毁
          */
@@ -242,8 +257,10 @@ define(
         /**
          * 移除集合第一个元素并返回
          *
+         * @method Collection#.shift
+         *
          * @param {Object} [options] 相关选项
-         * @param {boolean} [options.silent=false] 如果该值为`true`则不触发{@link Collection#event-remove}事件
+         * @param {boolean} [options.silent=false] 如果该值为`true`则不触发{@link Collection#.event:remove|remove事件}
          *
          * @throws {Error} 当前集合已经销毁
          */
@@ -256,9 +273,11 @@ define(
         /**
          * 移除集合中所有的给定元素
          *
-         * @param {Mixed} item 需要移除的元素
+         * @method Collection#.remove
+         *
+         * @param {*} item 需要移除的元素
          * @param {Object} [options] 相关选项
-         * @param {boolean} [options.silent=false] 如果该值为`true`则不触发{@link Collection#event-remove}事件
+         * @param {boolean} [options.silent=false] 如果该值为`true`则不触发{@link Collection#.event:remove|remove事件}
          *
          * @throws {Error} 当前集合已经销毁
          * @throws {Error} 未提供`item`参数
@@ -278,7 +297,9 @@ define(
         /**
          * 查找指定元素在集合中第一次出现的位置
          *
-         * @param {Mixed} item 指定查找的元素
+         * @method Collection#.indexOf
+         *
+         * @param {*} item 指定查找的元素
          * @param {number} [startIndex=0] 指定开始查找的位置，如果为负数则从最后位置往前计算，如果超出范围则不进行搜索返回`-1`
          * @return {number} 元素所在的位置，如果集合中从指定的位置开始未能找到元素则返回-1
          *
@@ -311,7 +332,9 @@ define(
          *
          * 如果当前集合已经销毁，该方法会返回一个空数组`[]`
          *
-         * @return {Mixed[]} 包含当前集合的元素（及其顺序）的数组
+         * @method Collection#.dump
+         *
+         * @return {Array} 包含当前集合的元素（及其顺序）的数组
          */
         exports.dump = function () {
             return this.store ? this.store.slice() : [];
@@ -319,6 +342,8 @@ define(
 
         /**
          * 复制当前集合
+         *
+         * @method Collection#.clone
          *
          * @return {Collection} 一个新的集合，包含当前集合的元素（及其顺序）
          *
@@ -332,6 +357,11 @@ define(
             return new Collection(this.store);
         };
 
+        /**
+         * 销毁当前集合
+         *
+         * @method Collection#.dispose
+         */
         exports.dispose = function () {
             this.store = null;
             this.length = undefined;
@@ -345,6 +375,8 @@ define(
          * - 当索引小于0并且其绝对值大于集合长度时，返回0
          *
          * 如果用于删除，由于索引值过大时会返回当前集合的长度，需要在返回值之后再减去1得到正确的删除位置
+         *
+         * @method Collection#.getValidIndex
          *
          * @param {number} index 输入的索引值
          * @return {number} 计算后的可用索引值
@@ -380,7 +412,9 @@ define(
          *
          * 此方法为私有方法，不要由外部或子类调用
          *
-         * @param {Mixed[]} items 需要添加的元素数组
+         * @method Collection#.addArray
+         *
+         * @param {Array} items 需要添加的元素数组
          * @param {Object} [options] 相关选项
          * @param {boolean} [options.silent=false] 如果该值为`true`则不触发{@link Collection#event-add}事件
          * @private
