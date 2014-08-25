@@ -84,8 +84,9 @@ define(
          * @param {number} index 需要添加的位置，关于位置的计算参考{@link Collection#getValidIndex}
          * @param {*} item 需要添加的元素
          * @param {Object} [options] 相关选项
-         * @param {boolean} [options.silent=false] 如果该值为`true`则不触发{@link Collection#event-add}事件
+         * @param {boolean} [options.silent=false] 如果该值为`true`则不触发{@link Collection#.event:add}事件
          *
+         * @fires add
          * @throws {Error} 当前集合已经销毁
          * @throws {Error} 未提供`index`参数
          * @throws {Error} 提供的`index`参数无法转换为数字
@@ -116,8 +117,8 @@ define(
                  *
                  * @event Collection#.add
                  *
-                 * @param {number} index 添加元素的位置
-                 * @param {*} item 添加的元素
+                 * @property {number} index 添加元素的位置
+                 * @property {*} item 添加的元素
                  */
                 this.fire('add', { index: index, item: item });
             }
@@ -135,6 +136,7 @@ define(
          * @param {Object} [options] 相关选项
          * @param {boolean} [options.silent=false] 如果该值为`true`则不触发{@link Collection#.event:add|add事件}
          *
+         * @fires add
          * @throws {Error} 当前集合已经销毁
          * @throws {Error} 未提供`index`参数
          * @throws {Error} 提供的`index`参数无法转换为数字
@@ -151,6 +153,7 @@ define(
          * @param {Object} [options] 相关选项
          * @param {boolean} [options.silent=false] 如果该值为`true`则不触发{@link Collection#.event:add|add事件}
          *
+         * @fires add
          * @throws {Error} 当前集合已经销毁
          * @throws {Error} 未提供`item`参数
          */
@@ -171,6 +174,7 @@ define(
          * @param {Object} [options] 相关选项
          * @param {boolean} [options.silent=false] 如果该值为`true`则不触发{@link Collection#.event:add|add事件}
          *
+         * @fires add
          * @throws {Error} 当前集合已经销毁
          * @throws {Error} 未提供`item`参数
          */
@@ -185,6 +189,7 @@ define(
          * @param {Object} [options] 相关选项
          * @param {boolean} [options.silent=false] 如果该值为`true`则不触发{@link Collection#.event:add|add事件}
          *
+         * @fires add
          * @throws {Error} 当前集合已经销毁
          * @throws {Error} 未提供`item`参数
          */
@@ -205,6 +210,7 @@ define(
          * @param {Object} [options] 相关选项
          * @param {boolean} [options.silent=false] 如果该值为`true`则不触发{@link Collection#.event:remove|remvoe事件}
          *
+         * @fires remove
          * @throws {Error} 当前集合已经销毁
          * @throws {Error} 未提供`index`参数
          * @throws {Error} 提供的`index`参数无法转换为数字
@@ -231,8 +237,8 @@ define(
                  *
                  * @event Collection#.remove
                  *
-                 * @param {number} index 移除元素的位置
-                 * @param {*} item 移除的元素
+                 * @property {number} index 移除元素的位置
+                 * @property {*} item 移除的元素
                  */
                 this.fire('remove', { index: actualIndex, item: removedItem });
             }
@@ -246,6 +252,7 @@ define(
          * @param {Object} [options] 相关选项
          * @param {boolean} [options.silent=false] 如果该值为`true`则不触发{@link Collection#.event:remove|remove事件}
          *
+         * @fires remove
          * @throws {Error} 当前集合已经销毁
          */
         exports.pop = function (options) {
@@ -262,6 +269,7 @@ define(
          * @param {Object} [options] 相关选项
          * @param {boolean} [options.silent=false] 如果该值为`true`则不触发{@link Collection#.event:remove|remove事件}
          *
+         * @fires remove
          * @throws {Error} 当前集合已经销毁
          */
         exports.shift = function (options) {
@@ -279,6 +287,7 @@ define(
          * @param {Object} [options] 相关选项
          * @param {boolean} [options.silent=false] 如果该值为`true`则不触发{@link Collection#.event:remove|remove事件}
          *
+         * @fires remove
          * @throws {Error} 当前集合已经销毁
          * @throws {Error} 未提供`item`参数
          */
@@ -416,7 +425,7 @@ define(
          *
          * @param {Array} items 需要添加的元素数组
          * @param {Object} [options] 相关选项
-         * @param {boolean} [options.silent=false] 如果该值为`true`则不触发{@link Collection#event-add}事件
+         * @param {boolean} [options.silent=false] 如果该值为`true`则不触发{@link Collection#.event:add}事件
          * @private
          *
          * @throws {Error} 提供的`items`参数不是数组
