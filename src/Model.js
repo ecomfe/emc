@@ -61,8 +61,8 @@ define(
          * @param {*} value 对应的值
          * @param {Object} [options] 相关选项
          * @param {boolean} [options.silent=false] 如果该值为`true`则不触发{@link Model#.event:change|change事件}
-         * @fires change
          *
+         * @fires change
          * @throws {Error} 当前对象已经销毁
          * @throws {Error} 未提供`name`参数
          * @throws {Error} 未提供`value`参数
@@ -98,10 +98,10 @@ define(
                  *
                  * @event Model#.change
                  *
-                 * @param {string} name 发生变化的属性的名称
-                 * @param {string} changeType 变化的类型，取值为`"add"`、`"change"`或`"remove"`
-                 * @param {*} oldValue 变化前的值
-                 * @param {*} newValue 变化后的值
+                 * @property {string} name 发生变化的属性的名称
+                 * @property {string} changeType 变化的类型，取值为`"add"`、`"change"`或`"remove"`
+                 * @property {*} oldValue 变化前的值
+                 * @property {*} newValue 变化后的值
                  */
                 this.fire('change', event);
                 this.fire('change:' + name, event);
@@ -116,8 +116,8 @@ define(
          * @param {Object} extension 批量值的存放对象
          * @param {Object} [options] 相关选项
          * @param {boolean} [options.silent=false] 如果该值为`true`则不触发{@link Model#.event:change|change事件}
-         * @fires change
          *
+         * @fires change
          * @throws {Error} 当前对象已经销毁
          * @throws {Error} 未提供`extension`参数
          */
@@ -145,8 +145,8 @@ define(
          * @param {string} name 属性名
          * @param {Object} [options] 相关选项
          * @param {boolean} [options.silent=false] 如果该值为`true`则不触发{@link Model#.event:change|change事件}
-         * @fires change
          *
+         * @fires change
          * @throws {Error} 当前对象已经销毁
          * @throws {Error} 未提供`name`参数
          */
