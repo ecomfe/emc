@@ -311,6 +311,7 @@ define(
          * @method Model#.dispose
          */
         exports.dispose = function () {
+            this.destroyEvents();
             this.store = null;
         };
 

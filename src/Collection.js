@@ -372,6 +372,7 @@ define(
          * @method Collection#.dispose
          */
         exports.dispose = function () {
+            this.destroyEvents();
             this.store = null;
             this.length = undefined;
         };
