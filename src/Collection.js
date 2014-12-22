@@ -366,6 +366,7 @@ define(
                 throw new Error('This collection is disposed');
             }
 
+            var Collection = this.$self;
             return new Collection(this.store);
         };
 

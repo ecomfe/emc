@@ -195,6 +195,7 @@ define(
          */
         exports.getAsModel = function (name) {
             var value = this.get(name);
+            var Model = this.$self;
             if (!value || {}.toString.call(value) !== '[object Object]') {
                 return new Model();
             }
@@ -301,6 +302,7 @@ define(
                 throw new Error('This model is disposed');
             }
 
+            var Model = this.$self;
             return new Model(this.store);
         };
 
