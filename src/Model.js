@@ -9,7 +9,7 @@
 define(
     function (require) {
         var EMPTY = {};
-        var SILENT = { silent: true };
+        var SILENT = {silent: true};
 
         /**
          * 一个带有数据变更通知的对象
@@ -161,7 +161,7 @@ define(
 
             // 如果原来就没这个值，就不触发`change`事件了
             if (!this.store.hasOwnProperty(name)) {
-                return undefined;
+                return;
             }
 
             options = options || EMPTY;
@@ -198,9 +198,8 @@ define(
             if (!value || {}.toString.call(value) !== '[object Object]') {
                 return new Model();
             }
-            else {
-                return new Model(value);
-            }
+
+            return new Model(value);
         };
 
         /**

@@ -9,7 +9,7 @@
 define(
     function (require) {
         var EMPTY = {};
-        var SILENT = { silent: true };
+        var SILENT = {silent: true};
 
         /**
          * 一个带有集合变更通知的数组
@@ -85,6 +85,7 @@ define(
          * @param {*} item 需要添加的元素
          * @param {Object} [options] 相关选项
          * @param {boolean} [options.silent=false] 如果该值为`true`则不触发{@link Collection#.event:add}事件
+         * @return {*} 插入的元素
          *
          * @fires add
          * @throws {Error} 当前集合已经销毁
@@ -120,7 +121,7 @@ define(
                  * @property {number} index 添加元素的位置
                  * @property {*} item 添加的元素
                  */
-                this.fire('add', { index: index, item: item });
+                this.fire('add', {index: index, item: item});
             }
 
             return item;
@@ -240,7 +241,7 @@ define(
                  * @property {number} index 移除元素的位置
                  * @property {*} item 移除的元素
                  */
-                this.fire('remove', { index: actualIndex, item: removedItem });
+                this.fire('remove', {index: actualIndex, item: removedItem});
             }
         };
 
@@ -251,6 +252,7 @@ define(
          *
          * @param {Object} [options] 相关选项
          * @param {boolean} [options.silent=false] 如果该值为`true`则不触发{@link Collection#.event:remove|remove事件}
+         * @return {*} 集合中的最后一个元素
          *
          * @fires remove
          * @throws {Error} 当前集合已经销毁
@@ -268,6 +270,7 @@ define(
          *
          * @param {Object} [options] 相关选项
          * @param {boolean} [options.silent=false] 如果该值为`true`则不触发{@link Collection#.event:remove|remove事件}
+         * @return {*} 集合中的第一个元素
          *
          * @fires remove
          * @throws {Error} 当前集合已经销毁
