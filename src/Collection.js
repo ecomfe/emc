@@ -339,13 +339,7 @@ export default class Collection extends EventTarget {
 
         startIndex = startIndex || 0;
 
-        let actualStartIndex = this.getValidIndex(startIndex);
-        for (let i = actualStartIndex; i < this.length; i++) {
-            if (this[STORE][i] === item) {
-                return i;
-            }
-        }
-        return -1;
+        return this[STORE].indexOf(item, startIndex);
     }
 
     /**
@@ -445,12 +439,12 @@ export default class Collection extends EventTarget {
      * @throws {Error} 提供的`items`参数不是数组
      */
     addArray(items, options) {
-        if (typeof items.length !== 'number') {
-            throw new Error('Argument itmes (of value "' + items + '") is not an array');
+        if (typeof items[Symbol.iterator] !== 'function') {
+            throw new Error('Argument itmes (of value "' + items + '") is not iterable');
         }
 
-        for (let i = 0; i < items.length; i++) {
-            this.add(items[i], options);
+        for (let item of items) {
+            this.add(item, options);
         }
     }
 }

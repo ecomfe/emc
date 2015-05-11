@@ -20,6 +20,13 @@ define(
                     expect(collection.get(1)).toBe(2);
                 });
 
+                it('should accept an array-like object as initial collection', function () {
+                    var set = new Set([1, 2]);
+                    var collection = new Collection(set);
+                    expect(collection.get(0)).toBe(1);
+                    expect(collection.get(1)).toBe(2);
+                });
+
                 it('should not effect the collection if array object is modified', function () {
                     var array = [1, 2];
                     var collection = new Collection(array);
