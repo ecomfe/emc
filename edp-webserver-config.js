@@ -7,7 +7,8 @@ var BABEL_OPTIONS = {
     modules: 'amd',
     compact: false,
     ast: false,
-    blacklist: ['strict']
+    blacklist: ['strict'],
+    externalHelpers: true
 };
 
 exports.getLocations = function () {
@@ -18,7 +19,6 @@ exports.getLocations = function () {
             handler: [
                 file(),
                 function compileBabel(context) {
-                    console.log('babel', context.request.url);
                     if (context.status !== 200) {
                         return;
                     }
