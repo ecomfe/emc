@@ -1,12 +1,15 @@
 {
-    "settings": {
-        "ecmascript": 6
-    },
     "rules": {
         "strict": false,
-        "quotes": [2, "single"]
+        "quotes": [2, "single"],
+        "no-shadow": false
     },
-    "globals": {
-        "Symbol": true
+    "env": {
+        "browser": true,
+        "node": true,
+        "es6": true
+    },
+    "ecmaFeatures": {
+        "modules": true
     }
 }
