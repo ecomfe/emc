@@ -13,10 +13,12 @@ var BABEL_OPTIONS = {
 exports.getLocations = function () {
     return [
         {
-            location: /^\/src\/.+\.js/,
+            key: 'source',
+            location: /^\/src\/.+\.js(\?.+)?/,
             handler: [
                 file(),
                 function compileBabel(context) {
+                    console.log('babel', context.request.url);
                     if (context.status !== 200) {
                         return;
                     }

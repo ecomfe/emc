@@ -6,6 +6,12 @@ module.exports = {
     basePath: '../',
 
 
+    templates: {
+        context: 'context.html',
+        debug: 'debug.html'
+    },
+
+
     // frameworks to use
     frameworks: ['jasmine', 'esl'],
 
@@ -46,7 +52,7 @@ module.exports = {
     // - Safari (only Mac; has to be installed with `npm install karma-safari-launcher`)
     // - PhantomJS
     // - IE (only Windows; has to be installed with `npm install karma-ie-launcher`)
-    browsers: ['PhantomJS'],
+    browsers: ['Chrome'],
 
 
     // Continuous Integration mode
