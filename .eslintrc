@@ -1,0 +1,12 @@
+{
+    "settings": {
+        "ecmascript": 6
+    },
+    "rules": {
+        "strict": false,
+        "quotes": [2, "single"]
+    },
+    "globals": {
+        "Symbol": true
+    }
+}

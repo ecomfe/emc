@@ -191,11 +191,6 @@ define(
                     expect(function () { collection.insert(/reg exp/, 3); }).toThrow();
                     expect(function () { collection.insert('string', 3); }).toThrow();
                 });
-
-                it('should have addAt method as alias', function () {
-                    var collection = new Collection();
-                    expect(collection.addAt).toBe(collection.insert);
-                });
             });
 
             describe('unshift method', function () {
