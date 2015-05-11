@@ -32,7 +32,7 @@ module.exports = {
     coverageReporter: {
         // text-summary | text | html | json | teamcity | cobertura | lcov
         // lcovonly | none | teamcity
-        type : 'text|html',
+        type : 'text',
         dir : 'test/coverage/'
     },
 
@@ -57,5 +57,5 @@ module.exports = {
 
     // Continuous Integration mode
     // if true, it capture browsers, run tests and exit
-    singleRun: false
+    singleRun: true
 };
