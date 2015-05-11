@@ -191,6 +191,14 @@ define(
                     expect(function () { collection.insert(/reg exp/, 3); }).toThrow();
                     expect(function () { collection.insert('string', 3); }).toThrow();
                 });
+
+                it('should has an alias method addAt', function () {
+                    var collection = new Collection([1, 2]);
+                    collection.addAt(1, 3);
+                    expect(collection.get(0)).toBe(1);
+                    expect(collection.get(1)).toBe(3);
+                    expect(collection.get(2)).toBe(2);
+                });
             });
 
             describe('unshift method', function () {
