@@ -6,6 +6,11 @@ Model & Collection with well-designed change notification
 ## 测试
 
 1. 安装`edp`
+
+    ```bash
+    npm i -g edp edp-test
+    ```
+
 2. 运行`npm test`
 
 ## 文档

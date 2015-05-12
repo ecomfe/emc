@@ -20,6 +20,13 @@ define(
                     expect(collection.get(1)).toBe(2);
                 });
 
+                it('should accept an array-like object as initial collection', function () {
+                    var set = new Set([1, 2]);
+                    var collection = new Collection(set);
+                    expect(collection.get(0)).toBe(1);
+                    expect(collection.get(1)).toBe(2);
+                });
+
                 it('should not effect the collection if array object is modified', function () {
                     var array = [1, 2];
                     var collection = new Collection(array);
@@ -192,9 +199,12 @@ define(
                     expect(function () { collection.insert('string', 3); }).toThrow();
                 });
 
-                it('should have addAt method as alias', function () {
-                    var collection = new Collection();
-                    expect(collection.addAt).toBe(collection.insert);
+                it('should has an alias method addAt', function () {
+                    var collection = new Collection([1, 2]);
+                    collection.addAt(1, 3);
+                    expect(collection.get(0)).toBe(1);
+                    expect(collection.get(1)).toBe(3);
+                    expect(collection.get(2)).toBe(2);
                 });
             });
 

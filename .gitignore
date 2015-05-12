@@ -1,3 +1,5 @@
 dep
 test/coverage
 doc/api
+node_modules
+bower_components
