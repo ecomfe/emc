@@ -1,6 +1,6 @@
 {
     "name": "emc",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "description": "Model & Collection with well-designed change notification",
     "main": "main.js",
     "dependencies": {},
@@ -19,7 +19,7 @@
         "loaderAutoConfig": "js,htm,html,tpl,vm,phtml",
         "loaderUrl": "http://s1.bdstatic.com/r/www/cache/ecom/esl/1-8-2/esl.js",
         "dependencies": {
-            "mini-event": "1.x"
+            "eoo": "~0.1.3"
         }
     },
     "devDependencies": {
