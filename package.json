@@ -19,7 +19,7 @@
         "loaderAutoConfig": "js,htm,html,tpl,vm,phtml",
         "loaderUrl": "http://s1.bdstatic.com/r/www/cache/ecom/esl/1-8-2/esl.js",
         "dependencies": {
-            "eoo": "~0.1.3"
+            "mini-event": "~1.0.2"
         }
     },
     "devDependencies": {
