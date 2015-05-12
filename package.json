@@ -1,6 +1,6 @@
 {
     "name": "emc",
-    "version": "1.0.1",
+    "version": "1.0.2",
     "description": "Model & Collection with well-designed change notification",
     "main": "main.js",
     "dependencies": {},
