@@ -6,6 +6,12 @@ module.exports = {
     basePath: '../',
 
 
+    templates: {
+        context: 'context.html',
+        debug: 'debug.html'
+    },
+
+
     // frameworks to use
     frameworks: ['jasmine', 'esl'],
 
@@ -26,7 +32,7 @@ module.exports = {
     coverageReporter: {
         // text-summary | text | html | json | teamcity | cobertura | lcov
         // lcovonly | none | teamcity
-        type : 'text|html',
+        type : 'text',
         dir : 'test/coverage/'
     },
 
