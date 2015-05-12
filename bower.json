@@ -1,0 +1,30 @@
+{
+    "name": "emc",
+    "version": "1.0.0",
+    "homepage": "https://github.com/ecomfe/emc",
+    "authors": [
+        "otakustay <otakustay@gmail.com>"
+    ],
+    "description": "Model & Collection with well-designed change notification",
+    "moduleType": [
+        "amd",
+        "es6"
+    ],
+    "keywords": [
+        "model",
+        "collection",
+        "MVVM"
+    ],
+    "license": "BSD",
+    "ignore": [
+        "**/.*",
+        "node_modules",
+        "bower_components",
+        "dep",
+        "test",
+        "doc"
+    ],
+    "dependencies": {
+        "eoo": "~0.1.3"
+    }
+}
