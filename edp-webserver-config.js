@@ -8,7 +8,8 @@ var BABEL_OPTIONS = {
     compact: false,
     ast: false,
     blacklist: ['strict'],
-    externalHelpers: true
+    externalHelpers: true,
+    sourceMaps: true
 };
 
 exports.getLocations = function () {
@@ -25,6 +26,7 @@ exports.getLocations = function () {
 
                     var code = context.content;
                     var babelResult = require('babel').transform(code, BABEL_OPTIONS);
+                    context.map = babelResult.map;
                     context.content = babelResult.code;
                 }
             ]
