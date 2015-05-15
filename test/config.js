@@ -6,14 +6,11 @@ module.exports = {
     basePath: '../',
 
 
-    templates: {
-        context: 'context.html',
-        debug: 'debug.html'
-    },
+
 
 
     // frameworks to use
-    frameworks: ['jasmine', 'esl'],
+    frameworks: ['jasmine', 'esl', './test/browser-polyfill.js', './test/babel-external-helpers.js'],
 
 
     // list of files / patterns to load in the browser
