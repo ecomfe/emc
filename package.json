@@ -9,10 +9,14 @@
         "srcDir": "src",
         "loaderAutoConfig": "js,htm,html,tpl,vm,phtml",
         "loaderUrl": "http://s1.bdstatic.com/r/www/cache/ecom/esl/1-8-2/esl.js",
-        "dependencies": {}
+        "dependencies": {
+            "underscore": "1.x",
+            "mini-event": "1.x"
+        }
     },
     "dependencies": {
-        "underscore": "1.x"
+        "underscore": "1.x",
+        "mini-event": "1.x"
     },
     "author": "otakustay",
     "repository": "https://github.com/ecomfe/emc",

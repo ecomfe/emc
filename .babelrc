@@ -1,0 +1,9 @@
+{
+    "loose": "all",
+    "modules": "amd",
+    "compact": false,
+    "ast": false,
+    "blacklist": ["strict"],
+    "externalHelpers": true,
+    "sourceMaps": "inline"
+}
