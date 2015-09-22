@@ -14,8 +14,16 @@ var BABEL_OPTIONS = {
 exports.getLocations = function () {
     return [
         {
+            // Under `test` directory but not spec file, this takes priority to `source` rule
+            location: /^\/test\/[^\/]+\.js(\?.+)?/,
+            handler: [
+                file()
+            ]
+        },
+        {
+            // All source and spec files
             key: 'source',
-            location: /^\/src\/.+\.js(\?.+)?/,
+            location: /\.js(\?.+)?/,
             handler: [
                 babel(BABEL_OPTIONS)
             ]
