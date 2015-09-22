@@ -78,63 +78,71 @@ define(
                     expect(function () { model.set('x'); }).toThrow();
                 });
 
-                it('should fire change event when change a property', function () {
+                it('should fire beforechange event when change a property', function () {
                     var model = new Model();
                     model.set('x', 1);
-                    var change = jasmine.createSpy('change');
-                    model.on('change', change);
+                    var beforeChange = jasmine.createSpy('beforechange');
+                    model.on('beforechange', beforeChange);
                     model.set('x', 2);
-                    expect(change).toHaveBeenCalled();
-                    var eventObject = change.mostRecentCall.args[0];
-                    expect(eventObject.type).toBe('change');
+                    expect(beforeChange).toHaveBeenCalled();
+                    var eventObject = beforeChange.mostRecentCall.args[0];
+                    expect(eventObject.type).toBe('beforechange');
                     expect(eventObject.changeType).toBe('change');
                     expect(eventObject.oldValue).toBe(1);
                     expect(eventObject.newValue).toBe(2);
+                    expect(eventObject.actualValue).toBe(2);
                 });
 
-                it('should fire property specific change event when change a property', function () {
+                it('should fire beforechange event when add a property', function () {
                     var model = new Model();
+                    var beforeChange = jasmine.createSpy('beforechange');
+                    model.on('beforechange', beforeChange);
                     model.set('x', 1);
-                    var change = jasmine.createSpy('change');
-                    model.on('change:x', change);
-                    model.set('x', 2);
-                    expect(change).toHaveBeenCalled();
-                    var eventObject = change.mostRecentCall.args[0];
-                    expect(eventObject.type).toBe('change:x');
-                    expect(eventObject.changeType).toBe('change');
-                    expect(eventObject.oldValue).toBe(1);
-                    expect(eventObject.newValue).toBe(2);
-                });
-
-                it('should fire change event when add a property', function () {
-                    var model = new Model();
-                    var change = jasmine.createSpy('change');
-                    model.on('change', change);
-                    model.set('x', 1);
-                    expect(change).toHaveBeenCalled();
-                    var eventObject = change.mostRecentCall.args[0];
-                    expect(eventObject.type).toBe('change');
+                    expect(beforeChange).toHaveBeenCalled();
+                    var eventObject = beforeChange.mostRecentCall.args[0];
+                    expect(eventObject.type).toBe('beforechange');
                     expect(eventObject.changeType).toBe('add');
                     expect(eventObject.oldValue).toBe(undefined);
                     expect(eventObject.newValue).toBe(1);
+                    expect(eventObject.actualValue).toBe(1);
                 });
 
-                it('should not fire change event when value is not changed', function () {
+                it('should not fire beforechange event when value is not changed', function () {
                     var model = new Model();
-                    var change = jasmine.createSpy('change');
+                    var beforeChange = jasmine.createSpy('beforechange');
                     model.set('x', 1);
-                    model.on('change', change);
+                    model.on('beforechange', beforeChange);
                     model.set('x', 1);
-                    expect(change).not.toHaveBeenCalled();
+                    expect(beforeChange).not.toHaveBeenCalled();
                 });
 
-                it('should not fire change event if silent flag is explicitly set', function () {
+                it('should not fire beforechange event if silent flag is explicitly set', function () {
                     var model = new Model();
-                    var change = jasmine.createSpy('change');
+                    var beforeChange = jasmine.createSpy('beforechange');
                     model.set('x', 1);
-                    model.on('change', change);
+                    model.on('beforechange', beforeChange);
                     model.set('x', 2, { silent: true });
-                    expect(change).not.toHaveBeenCalled();
+                    expect(beforeChange).not.toHaveBeenCalled();
+                });
+
+                it('should not change value if beforechange event is default prevented', function () {
+                    var model = new Model();
+                    var beforeChange = function (e) {
+                        e.preventDefault();
+                    };
+                    model.on('beforechange', beforeChange);
+                    model.set('x', 1);
+                    expect(model.has('x')).toBe(false);
+                });
+
+                it('should use actualValue of event object instead of value given by set method call', function () {
+                    var model = new Model();
+                    var beforeChange = function (e) {
+                        e.actualValue = 2;
+                    };
+                    model.on('beforechange', beforeChange);
+                    model.set('x', 1);
+                    expect(model.get('x')).toBe(2);
                 });
             });
 
@@ -153,11 +161,11 @@ define(
                     expect(function () { model.remove(null); }).toThrow();
                 });
 
-                it('should fire change event if property previously has a value', function () {
+                it('should fire beforechange event if property previously has a value', function () {
                     var model = new Model();
                     model.set('x', 1);
-                    var change = jasmine.createSpy('change');
-                    model.on('change', change);
+                    var change = jasmine.createSpy('beforechange');
+                    model.on('beforechange', change);
                     model.remove('x');
                     expect(change).toHaveBeenCalled();
                     var eventObject = change.mostRecentCall.args[0];
@@ -166,47 +174,45 @@ define(
                     expect(eventObject.newValue).toBe(undefined);
                 });
 
-                it('should fire property specific change event if property previously has a value', function () {
-                    var model = new Model();
-                    model.set('x', 1);
-                    var change = jasmine.createSpy('change');
-                    model.on('change:x', change);
-                    model.remove('x');
-                    expect(change).toHaveBeenCalled();
-                    var eventObject = change.mostRecentCall.args[0];
-                    expect(eventObject.changeType).toBe('remove');
-                    expect(eventObject.oldValue).toBe(1);
-                    expect(eventObject.newValue).toBe(undefined);
-                });
-
-                it('should fire change event if property previously exists (even undefined)', function () {
+                it('should fire beforechange event if property previously exists (even undefined)', function () {
                     var model = new Model();
                     model.set('x', undefined);
-                    var change = jasmine.createSpy('change');
-                    model.on('change', change);
+                    var beforeChange = jasmine.createSpy('beforechange');
+                    model.on('beforechange', beforeChange);
                     model.remove('x');
-                    expect(change).toHaveBeenCalled();
-                    var eventObject = change.mostRecentCall.args[0];
+                    expect(beforeChange).toHaveBeenCalled();
+                    var eventObject = beforeChange.mostRecentCall.args[0];
                     expect(eventObject.changeType).toBe('remove');
                     expect(eventObject.oldValue).toBe(undefined);
                     expect(eventObject.newValue).toBe(undefined);
                 });
 
-                it('should not fire change event is property did not previously exist', function () {
+                it('should not fire beforechange event is property did not previously exist', function () {
                     var model = new Model();
-                    var change = jasmine.createSpy('change');
-                    model.on('change', change);
+                    var beforeChange = jasmine.createSpy('beforechange');
+                    model.on('beforechange', beforeChange);
                     model.remove('x');
-                    expect(change).not.toHaveBeenCalled();
+                    expect(beforeChange).not.toHaveBeenCalled();
                 });
 
-                it('should not fire change event if silent flag is explicitly set', function () {
+                it('should not fire beforechange event if silent flag is explicitly set', function () {
                     var model = new Model();
                     model.set('x', 1);
-                    var change = jasmine.createSpy('change');
-                    model.on('change', change);
+                    var beforeChange = jasmine.createSpy('beforechange');
+                    model.on('beforechange', beforeChange);
                     model.remove('x', { silent: true });
-                    expect(change).not.toHaveBeenCalled();
+                    expect(beforeChange).not.toHaveBeenCalled();
+                });
+
+                it('should not remove value if beforechange event is default prevented', function () {
+                    var model = new Model();
+                    var beforeChange = function (e) {
+                        e.preventDefault();
+                    };
+                    model.set('x', 1);
+                    model.on('beforechange', beforeChange);
+                    model.remove('x');
+                    expect(model.get('x')).toBe(1);
                 });
             });
 
