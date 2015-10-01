@@ -3,7 +3,6 @@ exports.directoryIndexes = true;
 exports.documentRoot = __dirname;
 
 var BABEL_OPTIONS = {
-    loose: 'all',
     modules: 'amd',
     compact: false,
     ast: false,
