@@ -83,7 +83,7 @@ describe('Model', () => {
             model.on('beforechange', beforeChange);
             model.set('x', 2);
             expect(beforeChange).toHaveBeenCalled();
-            let eventObject = beforeChange.mostRecentCall.args[0];
+            let eventObject = beforeChange.calls.mostRecent().args[0];
             expect(eventObject.type).toBe('beforechange');
             expect(eventObject.changeType).toBe('change');
             expect(eventObject.oldValue).toBe(1);
@@ -97,7 +97,7 @@ describe('Model', () => {
             model.on('beforechange', beforeChange);
             model.set('x', 1);
             expect(beforeChange).toHaveBeenCalled();
-            let eventObject = beforeChange.mostRecentCall.args[0];
+            let eventObject = beforeChange.calls.mostRecent().args[0];
             expect(eventObject.type).toBe('beforechange');
             expect(eventObject.changeType).toBe('add');
             expect(eventObject.oldValue).toBe(undefined);
@@ -129,8 +129,11 @@ describe('Model', () => {
                 e.preventDefault();
             };
             model.on('beforechange', beforeChange);
+            let change = jasmine.createSpy('change');
+            model.on('change', change);
             model.set('x', 1);
             expect(model.has('x')).toBe(false);
+            expect(change).not.toHaveBeenCalled();
         });
 
         it('should use actualValue of event object instead of value given by set method call', () => {
@@ -141,6 +144,16 @@ describe('Model', () => {
             model.on('beforechange', beforeChange);
             model.set('x', 1);
             expect(model.get('x')).toBe(2);
+        });
+
+        it('should not fire change event if actualValue is set to the same previous value', () => {
+            let model = new Model();
+            model.set('x', 1);
+            model.on('beforechange', (e) => e.actualValue = 1);
+            let change = jasmine.createSpy('change');
+            model.on('change', change);
+            model.set('x', 2);
+            expect(change).not.toHaveBeenCalled();
         });
     });
 
@@ -166,7 +179,7 @@ describe('Model', () => {
             model.on('beforechange', change);
             model.remove('x');
             expect(change).toHaveBeenCalled();
-            let eventObject = change.mostRecentCall.args[0];
+            let eventObject = change.calls.mostRecent().args[0];
             expect(eventObject.changeType).toBe('remove');
             expect(eventObject.oldValue).toBe(1);
             expect(eventObject.newValue).toBe(undefined);
@@ -179,7 +192,7 @@ describe('Model', () => {
             model.on('beforechange', beforeChange);
             model.remove('x');
             expect(beforeChange).toHaveBeenCalled();
-            let eventObject = beforeChange.mostRecentCall.args[0];
+            let eventObject = beforeChange.calls.mostRecent().args[0];
             expect(eventObject.changeType).toBe('remove');
             expect(eventObject.oldValue).toBe(undefined);
             expect(eventObject.newValue).toBe(undefined);
@@ -313,6 +326,45 @@ describe('Model', () => {
             expect(model.has('x')).toBe(false)
             expect(model.hasValue('x')).toBe(false)
             expect(model.hasReadableValue('x')).toBe(false)
+        });
+    });
+
+    describe('update event', () => {
+        it('should fire when a property is changed', (done) => {
+            let model = new Model();
+            model.set('x', 1);
+            model.set('y', 2);
+            model.on('update', (e) => {
+                expect(e.diff).toEqual({
+                    x: {
+                        $change: 'add',
+                        oldValue: undefined,
+                        newValue: 2
+                    },
+                    y: {
+                        $change: 'add',
+                        oldValue: undefined,
+                        newValue: 2
+                    }
+                });
+                done();
+            });
+            model.set('x', 2);
+        });
+
+        it('should not fire when there is actually no change', (done) => {
+            let model = new Model();
+            model.set('x', 1);
+            setTimeout(() => {
+                let update = jasmine.createSpy('update');
+                model.on('update', update);
+                model.set('x', 2);
+                model.set('x', 1);
+                setTimeout(() => {
+                    expect(update).not.toHaveBeenCalled();
+                    done();
+                }, 10);
+            }, 10);
         });
     });
 });
