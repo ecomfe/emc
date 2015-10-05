@@ -8,15 +8,18 @@
  */
 
 import u from 'underscore';
+import update from './update';
 import EventTarget from 'mini-event/EventTarget';
 
 const EMPTY = {};
 const STORE = Symbol('store');
 const DIFF = Symbol('diff');
+const OLD_VALUES = Symbol('oldValues');
+const IS_UPDATE_NOTIFICATION_IN_QUEUE = Symbol('asyncTick');
+const SET_VALUE = Symbol('setValue');
 const ASSIGN_VALUE = Symbol('assignValue');
 const MERGE_UPDATE_DIFF = Symbol('mergeUpdateDiff');
-const QUEUE_UPDATE_NOTIFICATION = Symbol('queueUpdateNotification');
-const ASYNC_TICK = Symbol('asyncTick');
+const SCHEDULE_UPDATE_EVENT = Symbol('scheduleUpdateEvent');
 
 /* eslint-disable brace-style */
 let global = (function () { return this; }());
@@ -29,18 +32,24 @@ function isDiffObject(target) {
     return target.hasOwnProperty('$change');
 }
 
-function mergeDiffNode(stored, merging, currentValue) {
+function mergeDiffNode(stored, merging, newValue, oldValue) {
     // For each diff node, we have a node previously stored (called `stored`)
     // and a node provided (called `merging`), it is possible to have many combinations:
     //
-    // 1. There is no `stored`, then `merging` is simply used.
-    // 2. There is no `mergine`, then no operation is performed.
-    // 3. `stored` and `merging` are both diff objects, we should merge them.
-    // 4. Only `stored` is a diff object, we discard `merging` and update the `newValue` of `stored`
-    // 5. `stored` is not a diff object but `merging` is, use `merging` to override `stored`.
-    // 6. Neither `stored` not `merging` is a diff object, it is time to merge child nodes.
+    // ```
+    // ┌──────────────┬──────────────┬────────────────────────────────────────────┐
+    // │ stored       │ merging      │ action                                     │
+    // ├──────────────┼──────────────┼────────────────────────────────────────────┤
+    // │ missing      │ any          │ use merging                                │
+    // │ any          │ missing      │ no action                                  │
+    // │ diff object  │ diff object  │ merge diff                                 │
+    // │ diff object  │ plain node   │ discard merging, update newValue of stored │
+    // │ plain node   │ diff object  │ use merging, update oldValue of mergine    │
+    // │ plain object │ plain object │ iterate children                           │
+    // └──────────────┴──────────────┴────────────────────────────────────────────┘
+    // ```
     //
-    // This may not generate the minimum diff, but is a good balance between complexity and accuracy.
+    // This algorithm may not generate the minimum diff, but is a good balance between complexity and accuracy.
     if (!stored) {
         return merging;
     }
@@ -53,16 +62,24 @@ function mergeDiffNode(stored, merging, currentValue) {
             return mergeDiffObject(stored, merging);
         }
 
-        stored.newValue = currentValue;
+        stored.newValue = newValue;
         return stored;
     }
 
     if (isDiffObject(merging)) {
+        merging.oldValue = oldValue;
         return merging;
     }
 
     for (let key of Object.keys(merging)) {
-        let mergedNode = mergeDiffNode(stored[key], merging[key], currentValue[key]);
+        let mergedNode = mergeDiffNode(
+            stored[key],
+            merging[key],
+            // It's not possible that `newValue` is `null` or `undefined` but we have a diff for its child key.
+            newValue[key],
+            // The initial value in store could be `null` or `undefined`
+            oldValue ? oldValue[key] : undefined
+        );
         if (mergedNode) {
             stored[key] = mergedNode;
         }
@@ -94,15 +111,21 @@ function mergeDiffObject(x, y) {
 
     // Change type is derived as following:
     //
-    // - add + add => not possible
-    // - add + change => add
-    // - add + remove => no change (previously returned)
-    // - change + add => not possible
-    // - change + change => change
-    // - change + remove => remove
-    // - remove + add => change
-    // - remove + change => not possible
-    // - remove + remove => not possible
+    // ```
+    // ┌──────────┬────────┬──────────────┐
+    // │ original │ target │ result       │
+    // ├──────────┼────────┼──────────────┤
+    // │ add      │ add    │ not possible │
+    // │ add      │ change │ add          │
+    // │ add      │ remove │ no change    │
+    // │ change   │ add    │ not possible │
+    // │ change   │ change │ change       │
+    // │ change   │ change │ remove       │
+    // │ remove   │ add    │ change       │
+    // │ remove   │ change │ not possible │
+    // │ remove   │ change │ not possible │
+    // └──────────┴────────┴──────────────┘
+    // ```
     if (x.$change === 'add') {
         result.$change = 'add';
     }
@@ -130,7 +153,9 @@ export default class Model extends EventTarget {
         super();
 
         this[STORE] = u.extend({}, initialData);
-        this[DIFF] = null;
+        this[IS_UPDATE_NOTIFICATION_IN_QUEUE] = false;
+        this[DIFF] = {};
+        this[OLD_VALUES] = {};
     }
 
     /**
@@ -164,14 +189,14 @@ export default class Model extends EventTarget {
      * @param {string} name The name of property.
      * @param {*} value The value of property.
      * @param {Object} [options] Extra options.
-     * @param {boolean} [options.silent=false] 如果该值为`true`则不触发{@link Model#event:change|change事件}
+     * @param {boolean} [options.silent] If `true`, no `change` or `update` event is fired.
      *
      * @fires change
      * @throws {Error} Current model instance is disposed.
      * @throws {Error} `name` argument is not provided.
      * @throws {Error} `value` argument is not provided.
      */
-    set(name, value, options) {
+    set(name, value, options = EMPTY) {
         if (!this[STORE]) {
             throw new Error('This model is disposed');
         }
@@ -184,49 +209,7 @@ export default class Model extends EventTarget {
             throw new Error('Argument value is not provided');
         }
 
-        options = options || EMPTY;
-
-        let oldValue = this[STORE][name];
-        let isValueChanged = !this.has(name) || oldValue !== value;
-        if (isValueChanged && !options.silent) {
-            let eventData = {
-                name: name,
-                changeType: this[STORE].hasOwnProperty(name) ? 'change' : 'add',
-                oldValue: oldValue,
-                newValue: value,
-                actualValue: value
-            };
-
-            /**
-             * Firs before a property is to be changed.
-             *
-             * The `beforechange` event is available for both `set` and `update` method,
-             * for `update` method it fires for each property change.
-             *
-             * If a `beforechange` event is originated from a `update` method, it provides a `diff` property.
-             *
-             * You can use `event.preventDefault()` to cancel the assignment of a property, no `change` will fire then.
-             *
-             * You can also set `event.actualValue` to change the final value of assignment,
-             * note if you do this, the `diff` property `update` method generates is lost,
-             * we do not provide a generic object diff due to performance considerations.
-             *
-             * @event Model#beforechange
-             *
-             * @property {string} name The name of property.
-             * @property {string} changeType The type of change, could be `"add"`, `"change"` or `"remove"`
-             * @property {*} oldValue The old value of property.
-             * @property {*} newValue The new value of property.
-             * @property {Object} [diff] A diff between the old and new value, only available for `update` method.
-             * @property {*} actualValue The actual value of prpoerty,
-             *     we can change this property to modified the value of the final set operation.
-             */
-            let event = this.fire('beforechange', eventData);
-
-            if (!event.isDefaultPrevented()) {
-                this[ASSIGN_VALUE](name, event.actualValue, event.changeType, options);
-            }
-        }
+        this[SET_VALUE](name, value, options);
     }
 
     /**
@@ -236,13 +219,13 @@ export default class Model extends EventTarget {
      *
      * @param {string} name The name of property.
      * @param {Object} [options] Extra options.
-     * @param {boolean} [options.silent=false] 如果该值为`true`则不触发{@link Model#event:change|change事件}
+     * @param {boolean} [options.silent] If `true`, no `change` or `update` event is fired.
      *
      * @fires change
      * @throws {Error} Current model instance is disposed.
      * @throws {Error} `name` argument is not provided.
      */
-    remove(name, options) {
+    remove(name, options = EMPTY) {
         if (!this[STORE]) {
             throw new Error('This model is disposed');
         }
@@ -256,7 +239,6 @@ export default class Model extends EventTarget {
             return;
         }
 
-        options = options || EMPTY;
         let oldValue = this[STORE][name];
 
         if (!options.silent) {
@@ -274,6 +256,26 @@ export default class Model extends EventTarget {
     }
 
     /**
+     * Update this model with a command object.
+     *
+     * This is a wrap of the {@link update} function except we do not allow root command in this method.
+     *
+     * We are able to merge diffs generated from multiple updates, so each property path has only one diff result.
+     *
+     * @param {Object} commands The update commands, see {@link update} function for detail.
+     * @param {Object} [options] Extra options.
+     * @param {boolean} [options.silent] If `true`, no `change` or `update` event is fired.
+     */
+    update(commands, options = EMPTY) {
+        // We don't allow root command here since it may modify the store to an unexpected value.
+        for (let name of Object.keys(commands)) {
+            let currentValue = this[STORE][name];
+            let [newValue, diff] = update(currentValue, commands[name]);
+            this[SET_VALUE](name, newValue, options, diff);
+        }
+    }
+
+    /**
      * Dump current {@link Model} instance as a plain object.
      *
      * @method Model#dump
@@ -281,8 +283,7 @@ export default class Model extends EventTarget {
      * @return {Object} A plain object, modifications to the dumped object takes no effect to model instance.
      */
     dump() {
-        // To ensure future modification will not affect the current model instance,
-        // here we must make a shallow copy.
+        // Make a shallow copy to ensure future modification will not affect the current model instance.
         return u.clone(this[STORE]) || {};
     }
 
@@ -362,24 +363,89 @@ export default class Model extends EventTarget {
         this.destroyEvents();
         this[STORE] = null;
         this[DIFF] = null;
-        this[ASYNC_TICK] = null;
+        this[OLD_VALUES] = null;
+        this[IS_UPDATE_NOTIFICATION_IN_QUEUE] = false;
+    }
+
+    /**
+     * Set value to a property with an optional diff.
+     *
+     * This is the core logic of `set` and `update` method.
+     *
+     * @param {string} name The name of property.
+     * @param {*} value The new value of proeprty.
+     * @param {Object} options Extra options.
+     * @param {boolean} [options.silent] If true, no `change` event is fired.
+     * @param {Object} [diff] A optional diff object which describes the modification of property.
+     */
+    [SET_VALUE](name, value, options, diff) {
+        let oldValue = this[STORE][name];
+        let isValueChanged = !this.has(name) || oldValue !== value;
+        if (isValueChanged && !options.silent) {
+            let eventData = {
+                name: name,
+                changeType: this[STORE].hasOwnProperty(name) ? 'change' : 'add',
+                oldValue: oldValue,
+                newValue: value,
+                actualValue: value,
+                diff: diff
+            };
+
+            /**
+             * Firs before a property is to be changed.
+             *
+             * The `beforechange` event is available for both `set` and `update` method,
+             * for `update` method it fires for each property change.
+             *
+             * If a `beforechange` event is originated from a `update` method, it provides a `diff` property.
+             *
+             * You can use `event.preventDefault()` to cancel the assignment of a property, no `change` will fire then.
+             *
+             * You can also set `event.actualValue` to change the final value of assignment,
+             * note if you do this, the `diff` property `update` method generates is lost,
+             * we do not provide a generic object diff due to performance considerations.
+             *
+             * @event Model#beforechange
+             *
+             * @property {string} name The name of property.
+             * @property {string} changeType The type of change, could be `"add"`, `"change"` or `"remove"`
+             * @property {*} oldValue The old value of property.
+             * @property {*} newValue The new value of property.
+             * @property {Object} [diff] A diff between the old and new value, only available for `update` method.
+             * @property {*} actualValue The actual value of prpoerty,
+             *     we can change this property to modified the value of the final set operation.
+             */
+            let event = this.fire('beforechange', eventData);
+
+            if (!event.isDefaultPrevented()) {
+                // Discard diff if `actualValue` is changed in event handlers.
+                let actualDiff = event.actualValue === value ? diff : undefined;
+                this[ASSIGN_VALUE](name, event.actualValue, event.changeType, options, actualDiff);
+            }
+        }
     }
 
     /**
      * Assign value to a property.
      *
+     * This is the core logic of `SET_VALUE` and `remove` method.
+     *
      * @param {string} name The name of property.
      * @param {*} newValue The new value of proeprty.
      * @param {string} changeType The change type, could be `"add"`, `"change"` or `"remove"`.
-     * @param {Object} options extra options.
+     * @param {Object} options Extra options.
      * @param {boolean} [options.silent] If true, no `change` event is fired.
-     * @param {Object} [diff] A optional diff object.
+     * @param {Object} [diff] A optional diff object which describes the modification of property.
      */
     [ASSIGN_VALUE](name, newValue, changeType, options, diff) {
         let oldValue = this[STORE][name];
 
         if (changeType === 'change' && newValue === oldValue) {
             return;
+        }
+
+        if (!this[OLD_VALUES].hasOwnProperty(name)) {
+            this[OLD_VALUES][name] = this[STORE][name];
         }
 
         if (changeType === 'remove') {
@@ -392,7 +458,9 @@ export default class Model extends EventTarget {
             this[STORE][name] = newValue;
         }
 
-        let mergingDiff = diff || {[name]: {$change: changeType, oldValue: oldValue, newValue: newValue}};
+        let mergingDiff = {
+            [name]: diff || {$change: changeType, oldValue: oldValue, newValue: newValue}
+        };
         this[MERGE_UPDATE_DIFF](mergingDiff);
 
         if (!options.silent) {
@@ -412,8 +480,11 @@ export default class Model extends EventTarget {
         }
     }
 
-    [QUEUE_UPDATE_NOTIFICATION]() {
-        if (this[ASYNC_TICK]) {
+    /**
+     * Schedule a task that fires `update` event, only 1 task will be scheduled in a call stack.
+     */
+    [SCHEDULE_UPDATE_EVENT]() {
+        if (this[IS_UPDATE_NOTIFICATION_IN_QUEUE]) {
             return;
         }
 
@@ -422,21 +493,32 @@ export default class Model extends EventTarget {
             if (this[STORE]) {
                 // Ensure previous loop generates diff, otherwise do not fire event.
                 if (Object.keys(this[DIFF]).length) {
+                    /**
+                     * Fires asynchronously after property changes.
+                     *
+                     * Since this event is asynchronous, it merges all property changes in a loop
+                     * and produces a combined `diff` object.
+                     *
+                     * @property {Object} [diff] A combined diff object.
+                     */
                     this.fire('update', {diff: this[DIFF]});
                 }
-                this[DIFF] = null;
-                this[ASYNC_TICK] = null;
+                this[DIFF] = {};
+                this[OLD_VALUES] = {};
+                this[IS_UPDATE_NOTIFICATION_IN_QUEUE] = false;
             }
         };
-        this[ASYNC_TICK] = async(update);
+        async(update);
+        this[IS_UPDATE_NOTIFICATION_IN_QUEUE] = true;
     }
 
+    /**
+     * Merge a diff generated from {@link update} function into all stored update diffs.
+     *
+     * @param {Object} diff Target diff obejct
+     */
     [MERGE_UPDATE_DIFF](diff) {
-        if (!this[DIFF]) {
-            this[DIFF] = {};
-        }
-
-        mergeDiffNode(this[DIFF], diff, this[STORE]);
-        this[QUEUE_UPDATE_NOTIFICATION]();
+        mergeDiffNode(this[DIFF], diff, this[STORE], this[OLD_VALUES]);
+        this[SCHEDULE_UPDATE_EVENT]();
     }
 }

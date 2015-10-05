@@ -225,6 +225,67 @@ describe('Model', () => {
             model.remove('x');
             expect(model.get('x')).toBe(1);
         });
+
+        it('should fire update event for existing property', (done) => {
+            let model = new Model({x: 1});
+            let update = (e) => {
+                expect(e.diff).toEqual({
+                    x: {
+                        $change: 'remove',
+                        oldValue: 1,
+                        newValue: undefined
+                    }
+                });
+                done();
+            };
+            model.on('update', update);
+            model.remove('x');
+        });
+    });
+
+    describe('update method', () => {
+        it('should update a property', () => {
+            let model = new Model({x: 1, y: [1, 2, 3], z: [2, 3, 4]});
+            model.update({x: {$set: 2}, y: {$push: 4}, z: {$unshift: 1}});
+            expect(model.get('x')).toBe(2);
+            expect(model.get('y')).toEqual([1, 2, 3, 4]);
+            expect(model.get('z')).toEqual([1, 2, 3, 4]);
+        });
+
+        it('should update a nested property', () => {
+            let model = new Model({x: {y: 1}});
+            model.update({x: {y: {$set: 2}}});
+            expect(model.get('x').y).toBe(2);
+        });
+
+        it('should fire beforechange events for each property modified', () => {
+            let model = new Model({x: 1, y: [1, 2, 3], z: {a: 1, b: 2}});
+            let beforeChange = jasmine.createSpy('beforeChange');
+            model.on('beforechange', beforeChange);
+            model.update({
+                // `x` is not modifed.
+                x: {$set: 1},
+                // `y` is modified to a new array.
+                y: {$push: 4},
+                // `z` becomes a new object although its properties are not changed.
+                z: {$merge: {a: 1}}
+            });
+            expect(beforeChange.calls.count()).toBe(2);
+        });
+
+        it('should cancel value assignment if beforechange event is default prevented', () => {
+            let z = {a: 1, b: 2};
+            let model = new Model({x: 1, y: [1, 2, 3], z: z});
+            let beforeChange = jasmine.createSpy('beforeChange');
+            model.on('beforechange', (e) => {
+                e.name === 'z' && e.preventDefault();
+            });
+            model.update({
+                z: {$merge: {a: 2}}
+            });
+            // `z` is not changed since `beforechange` is default prevented.
+            expect(model.get('z')).toBe(z);
+        });
     });
 
     describe('dump method', () => {
@@ -365,6 +426,68 @@ describe('Model', () => {
                     done();
                 }, 10);
             }, 10);
+        });
+
+        it('should merge diffs from multiple $set command', (done) => {
+            let model = new Model({x: {a: 1, b: 2}});
+            model.on('update', (e) => {
+                expect(e.diff).toEqual({
+                    x: {
+                        a: {
+                            $change: 'change',
+                            oldValue: 1,
+                            newValue: 3
+                        }
+                    }
+                });
+                done();
+            });
+            model.update({x: {a: {$set: 2}, b: {$set: 3}}});
+            model.update({x: {a: {$set: 3}, b: {$set: 2}}});
+        });
+
+        it('should merge diff for an update of property after its child prpoerty updates', (done) => {
+            let model = new Model({x: {y: {a: 1, b: 2}}});
+            model.on('update', (e) => {
+                expect(e.diff).toEqual({
+                    x: {
+                        $change: 'change',
+                        oldValue: {
+                            y: {
+                                a: 1,
+                                b: 2
+                            }
+                        },
+                        newValue: 1
+                    }
+                });
+                done();
+            });
+            model.update({x: {y: {$merge: {c: 3}}}});
+            model.update({x: {$set: 1}});
+        });
+
+        it('should merge diff for an update of property after its parent prpoerty updates', (done) => {
+            let model = new Model({x: {y: {a: 1, b: 2}}});
+            model.on('update', (e) => {
+                expect(e.diff).toEqual({
+                    x: {
+                        $change: 'change',
+                        oldValue: {
+                            y: {
+                                a: 1,
+                                b: 2
+                            }
+                        },
+                        newValue: {
+                            y: [1]
+                        }
+                    }
+                });
+                done();
+            });
+            model.update({x: {$set: {y: []}}});
+            model.update({x: {y: {$push: 1}}});
         });
     });
 });

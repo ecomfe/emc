@@ -13,7 +13,7 @@ module.exports = {
 
 
     // frameworks to use
-    frameworks: ['jasmine', 'esl'],
+    frameworks: ['jasmine2', 'esl'],
 
 
     // list of files / patterns to load in the browser
@@ -32,7 +32,7 @@ module.exports = {
     coverageReporter: {
         // text-summary | text | html | json | teamcity | cobertura | lcov
         // lcovonly | none | teamcity
-        type : 'text',
+        type : 'html',
         dir : 'test/coverage/'
     },
 
@@ -57,5 +57,5 @@ module.exports = {
 
     // Continuous Integration mode
     // if true, it capture browsers, run tests and exit
-    singleRun: false
+    singleRun: true
 };
