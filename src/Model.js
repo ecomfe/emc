@@ -201,7 +201,11 @@ export default class Model extends EventTarget {
      * @param {Object} [options] Extra options.
      * @param {boolean} [options.silent] If `true`, no `change` or `update` event is fired.
      *
+     *
+     * @fires beforechange
      * @fires change
+     * @fires update
+     *
      * @throws {Error} Current model instance is disposed.
      * @throws {Error} `name` argument is not provided.
      * @throws {Error} `value` argument is not provided.
@@ -231,7 +235,11 @@ export default class Model extends EventTarget {
      * @param {Object} [options] Extra options.
      * @param {boolean} [options.silent] If `true`, no `change` or `update` event is fired.
      *
+     *
+     * @fires beforechange
      * @fires change
+     * @fires update
+     *
      * @throws {Error} Current model instance is disposed.
      * @throws {Error} `name` argument is not provided.
      */
@@ -272,9 +280,15 @@ export default class Model extends EventTarget {
      *
      * We are able to merge diffs generated from multiple updates, so each property path has only one diff result.
      *
+     * @method update
+     *
      * @param {Object} commands The update commands, see {@link update} function for detail.
      * @param {Object} [options] Extra options.
      * @param {boolean} [options.silent] If `true`, no `change` or `update` event is fired.
+     *
+     * @fires beforechange
+     * @fires change
+     * @fires update
      */
     update(commands, options = EMPTY) {
         // We don't allow root command here since it may modify the store to an unexpected value.
@@ -382,6 +396,9 @@ export default class Model extends EventTarget {
      *
      * This is the core logic of `set` and `update` method.
      *
+     * @private
+     * @method setValue
+     *
      * @param {string} name The name of property.
      * @param {*} value The new value of proeprty.
      * @param {Object} options Extra options.
@@ -440,6 +457,9 @@ export default class Model extends EventTarget {
      *
      * This is the core logic of `SET_VALUE` and `remove` method.
      *
+     * @private
+     * @method assignValue
+     *
      * @param {string} name The name of property.
      * @param {*} newValue The new value of proeprty.
      * @param {string} changeType The change type, could be `"add"`, `"change"` or `"remove"`.
@@ -492,6 +512,9 @@ export default class Model extends EventTarget {
 
     /**
      * Schedule a task that fires `update` event, only 1 task will be scheduled in a call stack.
+     *
+     * @private
+     * @method scheduleUpdateEvent
      */
     [SCHEDULE_UPDATE_EVENT]() {
         if (this[IS_UPDATE_NOTIFICATION_IN_QUEUE]) {
@@ -524,6 +547,9 @@ export default class Model extends EventTarget {
 
     /**
      * Merge a diff generated from {@link update} function into all stored update diffs.
+     *
+     * @private
+     * @method mergeUpdateDiff
      *
      * @param {Object} diff Target diff obejct
      */
