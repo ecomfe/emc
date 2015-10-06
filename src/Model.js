@@ -289,8 +289,14 @@ export default class Model extends EventTarget {
      * @fires beforechange
      * @fires change
      * @fires update
+     *
+     * @throws {Error} `commands` argument is not provided.
      */
     update(commands, options = EMPTY) {
+        if (!commands) {
+            throw new Error('Argument commands is not provided');
+        }
+
         // We don't allow root command here since it may modify the store to an unexpected value.
         for (let name of Object.keys(commands)) {
             let currentValue = this[STORE][name];
