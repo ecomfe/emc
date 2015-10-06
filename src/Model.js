@@ -88,7 +88,7 @@ function mergeDiffNode(stored, merging, newValue, oldValue) {
         }
     }
 
-    return stored;
+    return u.isEmpty(stored) ? null : stored;
 }
 
 function mergeDiffObject(x, y) {
@@ -492,7 +492,7 @@ export default class Model extends EventTarget {
             // Do not fire event on disposed model.
             if (this[STORE]) {
                 // Ensure previous loop generates diff, otherwise do not fire event.
-                if (Object.keys(this[DIFF]).length) {
+                if (!u.isEmpty(this[DIFF])) {
                     /**
                      * Fires asynchronously after property changes.
                      *

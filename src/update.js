@@ -74,7 +74,7 @@ const AVAILABLE_COMMANDS = {
                 newValue[key] = propertyValue;
             }
         }
-        if (!Object.keys(diff).length) {
+        if (u.isEmpty(diff)) {
             diff = null;
         }
         return [newValue, diff];
@@ -193,7 +193,7 @@ export default function update(source, commands) {
         u.clone(source)
     );
 
-    if (!Object.keys(diff).length) {
+    if (u.isEmpty(diff)) {
         diff = null;
     }
     return [result, diff];

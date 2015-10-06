@@ -414,17 +414,26 @@ describe('Model', () => {
         });
 
         it('should not fire when there is actually no change', (done) => {
-            let model = new Model();
+            let model = new Model({x: 1});
+            let update = jasmine.createSpy('update');
+            model.on('update', update);
+            model.set('x', 2);
             model.set('x', 1);
             setTimeout(() => {
-                let update = jasmine.createSpy('update');
-                model.on('update', update);
-                model.set('x', 2);
-                model.set('x', 1);
-                setTimeout(() => {
-                    expect(update).not.toHaveBeenCalled();
-                    done();
-                }, 10);
+                expect(update).not.toHaveBeenCalled();
+                done();
+            }, 10);
+        });
+
+        it('should not fire if a nested property has updates but no changes', (done) => {
+            let model = new Model({x: {y: 1}});
+            let update = jasmine.createSpy('update');
+            model.on('update', update);
+            model.update({x: {y: {$set: 2}}});
+            model.update({x: {y: {$set: 1}}});
+            setTimeout(() => {
+                expect(update).not.toHaveBeenCalled();
+                done();
             }, 10);
         });
 
