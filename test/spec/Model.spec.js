@@ -426,11 +426,12 @@ describe('Model', () => {
         });
 
         it('should not fire if a nested property has updates but no changes', (done) => {
-            let model = new Model({x: {y: 1}});
+            let o = {z: 1};
+            let model = new Model({x: {y: o}});
             let update = jasmine.createSpy('update');
             model.on('update', update);
-            model.update({x: {y: {$set: 2}}});
-            model.update({x: {y: {$set: 1}}});
+            model.update({x: {y: {$merge: {a: 1, b: 2}}}});
+            model.update({x: {y: {$set: o}}});
             setTimeout(() => {
                 expect(update).not.toHaveBeenCalled();
                 done();

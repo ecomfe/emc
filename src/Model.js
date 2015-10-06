@@ -32,6 +32,16 @@ function isDiffObject(target) {
     return target.hasOwnProperty('$change');
 }
 
+function purgeUneccessaryDiffNode(node) {
+    if (u.isEmpty(node)) {
+        return null;
+    }
+    if (node.$change === 'change' && node.newValue === node.oldValue) {
+        return null;
+    }
+    return node;
+}
+
 function mergeDiffNode(stored, merging, newValue, oldValue) {
     // For each diff node, we have a node previously stored (called `stored`)
     // and a node provided (called `merging`), it is possible to have many combinations:
@@ -63,12 +73,12 @@ function mergeDiffNode(stored, merging, newValue, oldValue) {
         }
 
         stored.newValue = newValue;
-        return stored;
+        return purgeUneccessaryDiffNode(stored);
     }
 
     if (isDiffObject(merging)) {
         merging.oldValue = oldValue;
-        return merging;
+        return purgeUneccessaryDiffNode(merging);
     }
 
     for (let key of Object.keys(merging)) {
@@ -88,7 +98,7 @@ function mergeDiffNode(stored, merging, newValue, oldValue) {
         }
     }
 
-    return u.isEmpty(stored) ? null : stored;
+    return purgeUneccessaryDiffNode(stored);
 }
 
 function mergeDiffObject(x, y) {
@@ -137,7 +147,7 @@ function mergeDiffObject(x, y) {
     }
 
     // If it happens that `oldValue` and `newValue` are the same, it is not a change anymore
-    return result.oldValue === result.newValue ? null : result;
+    return purgeUneccessaryDiffNode(result);
 }
 
 /**
