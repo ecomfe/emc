@@ -12,10 +12,18 @@ import update from './update';
 import EventTarget from 'mini-event/EventTarget';
 
 const EMPTY = {};
+const EMPTY_SET = new Set();
+
 const STORE = Symbol('store');
+const COMPUTED_PROPERTIES = Symbol('computedProperties');
 const DIFF = Symbol('diff');
 const OLD_VALUES = Symbol('oldValues');
+const SUPRESS_COMPUTED_PROPERTY_CHANGE = Symbol('supressComputedPropertyChange');
 const IS_UPDATE_NOTIFICATION_IN_QUEUE = Symbol('asyncTick');
+const HAS_COMPUTED_PROPERTY = Symbol('hasComputedProperty');
+const SET_COMPUTED_PROPERTY = Symbol('setComputedProperty');
+const UPDATE_COMPUTED_PROPERTY = Symbol('updateComputedProperty');
+const UPDATE_COMPUTED_PROPERTIES_FROM_DEPENDENCY = Symbol('updateComputedPropertiesFromDependency');
 const SET_VALUE = Symbol('setValue');
 const ASSIGN_VALUE = Symbol('assignValue');
 const MERGE_UPDATE_DIFF = Symbol('mergeUpdateDiff');
@@ -163,7 +171,9 @@ export default class Model extends EventTarget {
         super();
 
         this[STORE] = u.extend({}, initialData);
+        this[COMPUTED_PROPERTIES] = {};
         this[IS_UPDATE_NOTIFICATION_IN_QUEUE] = false;
+        this[SUPRESS_COMPUTED_PROPERTY_CHANGE] = false;
         this[DIFF] = {};
         this[OLD_VALUES] = {};
     }
@@ -223,7 +233,12 @@ export default class Model extends EventTarget {
             throw new Error('Argument value is not provided');
         }
 
-        this[SET_VALUE](name, value, options);
+        if (this[HAS_COMPUTED_PROPERTY](name)) {
+            this[SET_COMPUTED_PROPERTY](name, value, options);
+        }
+        else {
+            this[SET_VALUE](name, value, options);
+        }
     }
 
     /**
@@ -385,6 +400,121 @@ export default class Model extends EventTarget {
     }
 
     /**
+     * Define a computed property
+     *
+     * A computed property is a property with dynamic compute logic for `get` and `set`,
+     * once `get` or `set` method is invoked, model instance will first look for a computed property with given name,
+     * if computed property is found, the property's defined getter or setter will be invoked instead.
+     *
+     * ```js
+     * class Rectangle {
+     *     constructor() {
+     *         this.defineComputedProperty(
+     *             'size',
+     *             ['width', 'height'],
+     *             function () {
+     *                 if (!this.has('width') || !this.has('height')) {
+     *                     return undefined;
+     *                 }
+     *
+     *                 return this.get('width') + '*' + this.get('height');
+     *             }
+     *         );
+     *     }
+     * }
+     *
+     * let rectangle = new Rectangle({width: 1920, height: 1080});
+     * rectangle.get('size'); // 1928*1080
+     * ```
+     *
+     * A computed property **MUST** be:
+     *
+     * 1. stable - multiple `get` calls should return the same value if model's state is not changed.
+     * 2. side effect free - `get` calls should not manipulate any state of the model instance.
+     *
+     * By default when a computed property is defined, its value is computed immediately and cached for future use,
+     * when any of the `dependencies` properties is changed, the value will be computed again.
+     *
+     * The cached value is stored in model such as it is a normal property, so methods like `dump` or `has*` works with
+     * computed properties naturally.
+     *
+     * The exception is when a property is set with a `slient: true` flag, all computed properties depended on it will
+     * not be updated, this may cause state inconsistent and is by design.
+     *
+     * You can specify a `set` function by making the `accessorOrGetter` an object containing a `set` method,
+     * during the set all events to this computed property are supressed in order to avoid unexpected `change` events,
+     * a `change` event will fire when `set` function returns.
+     *
+     * Because the value of computed properties finally depends on its dependency properties, you may not get expected
+     * `newValue` when we set a computed property if your `get` and `set` functions are not carefully paired.
+     * For example, if we supress changes in `beforechange` event for `width` property, then `set` to `size` property
+     * will not provide an expected new `size` value.
+     *
+     * ```js
+     * class Rectangle {
+     *     constructor() {
+     *         this.defineComputedProperty(
+     *             'size',
+     *             ['width', 'height'],
+     *             {
+     *                 get() {
+     *                     if (!this.has('width') || !this.has('height')) {
+     *                         return undefined;
+     *                     }
+     *
+     *                     return this.get('width') + '*' + this.get('height');
+     *                 },
+     *                 set(value, options) {
+     *                     let [width, height] = value ? value.split('*') : [undefined, undefined];
+     *                     this.set('width', width, options);
+     *                     this.set('height', height, options);
+     *                 }
+     *             }
+     *         );
+     *     }
+     * }
+
+     * let rectangle = new Rectangle();
+     * rectangle.set('size', '1920*1080');
+     * ```
+     *
+     * If a `set` function is missing, any attempt to set this property throws a error.
+     *
+     * Computed properties do not support `beforechange` event, if you need to cancel value assignment or change
+     * the actual value, implement it in `set` function.
+     *
+     * @protected
+     * @param {string} name The name of computed property.
+     * @param {string[]} dependencies The dependency properties.
+     * @param {Object|Function} accessorOrGetter A getter function or a descriptor containing meta of the property.
+     * @param {Function} accessorOrGetter.get A getter function for computed property.
+     * @param {Function} [accessorOrGetter.set] A optional set function for computed property.
+     */
+    defineComputedProperty(name, dependencies, accessorOrGetter) {
+        let accessor = typeof accessorOrGetter === 'function' ? {get: accessorOrGetter} : accessorOrGetter;
+        let descriptor = Object.assign({name, dependencies}, accessor);
+        descriptor.dependencySet = new Set(dependencies);
+
+        // Listen for dependency changes
+        this.on(
+            'change',
+            (e) => {
+                if (this[SUPRESS_COMPUTED_PROPERTY_CHANGE]) {
+                    return;
+                }
+
+                if (descriptor.dependencySet.has(e.name)) {
+                    this[UPDATE_COMPUTED_PROPERTY](name);
+                }
+            }
+        );
+
+        this[COMPUTED_PROPERTIES][name] = descriptor;
+        // Cache initial value, this should not affect update diff
+        this[STORE][name] = descriptor.get.call(this);
+    }
+
+    /**
      * Dispose current {@link Model} instance.
      *
      * @method Model#dispose
@@ -395,6 +525,64 @@ export default class Model extends EventTarget {
         this[DIFF] = null;
         this[OLD_VALUES] = null;
         this[IS_UPDATE_NOTIFICATION_IN_QUEUE] = false;
+    }
+
+    /**
+     * Determine if specified computed property exits.
+     *
+     * @param {string} name Property name.
+     * @return {boolean}
+     */
+    [HAS_COMPUTED_PROPERTY](name) {
+        return this[COMPUTED_PROPERTIES].hasOwnProperty(name);
+    }
+
+    /**
+     * Set the value of a computed property.
+     *
+     * @param {string} name Property name.
+     * @param {*} value Property value.
+     * @param {Object} [options] Extra options.
+     * @param {boolean} [options.silent] If `true`, no `change` or `update` event is fired.
+     */
+    [SET_COMPUTED_PROPERTY](name, value, options) {
+        let {set, dependencies, dependencySet} = this[COMPUTED_PROPERTIES][name];
+
+        if (!set) {
+            throw new Error(`Cannot set readonly computed property ${name}`);
+        }
+
+        this[SUPRESS_COMPUTED_PROPERTY_CHANGE] = true;
+        this::set(value, options);
+        this[SUPRESS_COMPUTED_PROPERTY_CHANGE] = false;
+        this[UPDATE_COMPUTED_PROPERTIES_FROM_DEPENDENCY](dependencies);
+    }
+
+    /**
+     * Update the cached value of a computed property and return the new value.
+     *
+     * @param {string} name Property name.
+     * @param {Object} [options] Extra options.
+     * @param {boolean} [options.silent] If `true`, no `change` or `update` event is fired.
+     */
+    [UPDATE_COMPUTED_PROPERTY](name, options = EMPTY) {
+        let {get} = this[COMPUTED_PROPERTIES][name];
+        let newValue = get.call(this);
+        this[SET_VALUE](name, newValue, Object.assign({disableHook: true}, options));
+    }
+
+    [UPDATE_COMPUTED_PROPERTIES_FROM_DEPENDENCY](dependencies) {
+        let updatingProperties = dependencies.reduce(
+            (result, propertyName) => {
+                let dependentComputedProperties = Object.values(this[COMPUTED_PROPERTIES])
+                    .filter(descriptor => descriptor.dependencySet.has(propertyName))
+                    .map(descriptor => descriptor.name);
+                dependentComputedProperties.forEach(::result.add);
+                return result;
+            },
+            new Set()
+        );
+        updatingProperties.forEach(::this[UPDATE_COMPUTED_PROPERTY]);
     }
 
     /**
@@ -409,6 +597,7 @@ export default class Model extends EventTarget {
      * @param {*} value The new value of proeprty.
      * @param {Object} options Extra options.
      * @param {boolean} [options.silent] If true, no `change` event is fired.
+     * @param {boolean} [options.disableHook] If true, no `beforechange` event is fired, internal use only.
      * @param {Object} [diff] A optional diff object which describes the modification of property.
      */
     [SET_VALUE](name, value, options, diff) {
@@ -420,7 +609,7 @@ export default class Model extends EventTarget {
 
         let changeType = this[STORE].hasOwnProperty(name) ? 'change' : 'add';
 
-        if (options.silent) {
+        if (options.silent || options.disableHook) {
             this[ASSIGN_VALUE](name, value, changeType, options, diff);
             return;
         }
