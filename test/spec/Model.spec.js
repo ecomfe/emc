@@ -551,6 +551,12 @@ describe('Model', () => {
             expect(rectangle.get('size')).toBe('3*3');
         });
 
+        it('should change with dependency updates', () => {
+            let rectangle = new Rectangle({width: 2, height: 3});
+            rectangle.update({width: {$set: 3}, height: {$set: 4}});
+            expect(rectangle.get('size')).toBe('3*4');
+        });
+
         it('should accept custom set function', () => {
             let rectangle = new Rectangle({width: 2, height: 3});
             rectangle.set('size', '4*5');
@@ -570,6 +576,20 @@ describe('Model', () => {
             expect(changeEvent.args[0].newValue).toBe('3*3');
         });
 
+        it('should fire change event when dependency updates', () => {
+            let rectangle = new Rectangle({width: 2, height: 3});
+            let change = jasmine.createSpy('change');
+            rectangle.on('change', change);
+            rectangle.update({width: {$set: 3}, height: {$set: 4}});
+            expect(change.calls.count()).toBe(6); // width + height + perimeter * 2 + size * 2
+            let changeEvents = change.calls.all().filter(e => e.args[0].name === 'size');
+            expect(changeEvents.length).toBe(2);
+            expect(changeEvents[0].args[0].oldValue).toBe('2*3');
+            expect(changeEvents[0].args[0].newValue).toBe('3*3');
+            expect(changeEvents[1].args[0].oldValue).toBe('3*3');
+            expect(changeEvents[1].args[0].newValue).toBe('3*4');
+        });
+
         it('should fire change event for dependencies when set', () => {
             let rectangle = new Rectangle({width: 2, height: 3});
             let change = jasmine.createSpy('change');
@@ -587,6 +607,11 @@ describe('Model', () => {
             expect(heightChangeEvent).not.toBeUndefined();
             expect(heightChangeEvent.args[0].oldValue).toBe(3);
             expect(heightChangeEvent.args[0].newValue).toBe(4);
+
+            let perimeterChangeEvent = change.calls.all().filter(e => e.args[0].name === 'perimeter')[0];
+            expect(perimeterChangeEvent).not.toBeUndefined();
+            expect(perimeterChangeEvent.args[0].oldValue).toBe(10);
+            expect(perimeterChangeEvent.args[0].newValue).toBe(14);
         });
 
         it('should compare values and filter only real changes', () => {
