@@ -501,4 +501,144 @@ describe('Model', () => {
             model.update({x: {y: {$push: 1}}});
         });
     });
+
+    class Rectangle extends Model {
+        constructor(initialData) {
+            super(initialData);
+
+            this.defineComputedProperty(
+                'size',
+                ['width', 'height'],
+                {
+                    get() {
+                        if (!this.has('width') || !this.has('height')) {
+                            return undefined;
+                        }
+
+                        return this.get('width') + '*' + this.get('height');
+                    },
+                    set(value, options) {
+                        let [width, height] = value ? value.split('*').map(Number) : [undefined, undefined];
+                        this.set('width', width, options);
+                        this.set('height', height, options);
+                    }
+                }
+
+            );
+
+            this.defineComputedProperty(
+                'perimeter',
+                ['width', 'height'],
+                function () {
+                    if (!this.has('width') || !this.has('height')) {
+                        return undefined;
+                    }
+                    return this.get('width') * 2 + this.get('height') * 2;
+                }
+            );
+        }
+    }
+
+    describe('computed properties', () => {
+        it('should accept custom get function', () => {
+            let rectangle = new Rectangle({width: 2, height: 3});
+            expect(rectangle.get('size')).toBe('2*3');
+        });
+
+        it('should change with dependencies', () => {
+            let rectangle = new Rectangle({width: 2, height: 3});
+            rectangle.set('width', 3);
+            expect(rectangle.get('size')).toBe('3*3');
+        });
+
+        it('should accept custom set function', () => {
+            let rectangle = new Rectangle({width: 2, height: 3});
+            rectangle.set('size', '4*5');
+            expect(rectangle.get('width')).toBe(4);
+            expect(rectangle.get('height')).toBe(5);
+        });
+
+        it('should fire change event when dependency changes', () => {
+            let rectangle = new Rectangle({width: 2, height: 3});
+            let change = jasmine.createSpy('change');
+            rectangle.on('change', change);
+            rectangle.set('width', 3);
+            expect(change.calls.count()).toBe(3); // width + perimeter + size
+            let changeEvent = change.calls.all().filter(e => e.args[0].name === 'size')[0];
+            expect(changeEvent).not.toBeUndefined();
+            expect(changeEvent.args[0].oldValue).toBe('2*3');
+            expect(changeEvent.args[0].newValue).toBe('3*3');
+        });
+
+        it('should fire change event for dependencies when set', () => {
+            let rectangle = new Rectangle({width: 2, height: 3});
+            let change = jasmine.createSpy('change');
+            rectangle.on('change', change);
+            rectangle.set('size', '3*4');
+
+            expect(change.calls.count()).toBe(4); // width + height + perimeter + size
+
+            let widthChangeEvent = change.calls.all().filter(e => e.args[0].name === 'width')[0];
+            expect(widthChangeEvent).not.toBeUndefined();
+            expect(widthChangeEvent.args[0].oldValue).toBe(2);
+            expect(widthChangeEvent.args[0].newValue).toBe(3);
+
+            let heightChangeEvent = change.calls.all().filter(e => e.args[0].name === 'height')[0];
+            expect(heightChangeEvent).not.toBeUndefined();
+            expect(heightChangeEvent.args[0].oldValue).toBe(3);
+            expect(heightChangeEvent.args[0].newValue).toBe(4);
+        });
+
+        it('should compare values and filter only real changes', () => {
+            let rectangle = new Rectangle({width: 2, height: 3});
+            let change = jasmine.createSpy('change');
+            rectangle.on('change', change);
+            rectangle.set('size', '3*2');
+
+            expect(change.calls.count()).toBe(3); // Only width + height + size
+
+            let perimeterChangeEvent = change.calls.all().filter(e => e.args[0].name === 'perimeter')[0];
+            expect(perimeterChangeEvent).toBeUndefined();
+        });
+
+        it('should not fire beforechange event when set', () => {
+            let rectangle = new Rectangle({width: 2, height: 3});
+            let beforeChange = jasmine.createSpy('beforeChange');
+            rectangle.on('beforechange', beforeChange);
+            rectangle.set('size', '3*4');
+
+            let sizeBeforeChangeEvent = beforeChange.calls.all().filter(e => e.args[0].name === 'size')[0];
+            expect(sizeBeforeChangeEvent).toBeUndefined();
+        });
+
+        it('should fire update event', (done) => {
+            let rectangle = new Rectangle({width: 2, height: 3});
+            rectangle.on('update', (e) => {
+                expect(e.diff).toEqual({
+                    width: {
+                        $change: 'change',
+                        oldValue: 2,
+                        newValue: 3
+                    },
+                    height: {
+                        $change: 'change',
+                        oldValue: 3,
+                        newValue: 4
+                    },
+                    perimeter: {
+                        $change: 'change',
+                        oldValue: 10,
+                        newValue: 14
+                    },
+                    size: {
+                        $change: 'change',
+                        oldValue: '2*3',
+                        newValue: '3*4'
+                    }
+                });
+                done();
+            });
+            rectangle.set('size', '3*4');
+        });
+    });
 });
