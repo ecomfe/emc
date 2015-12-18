@@ -6,6 +6,7 @@ var BABEL_OPTIONS = {
     modules: 'amd',
     compact: false,
     ast: false,
+    stage: 0,
     blacklist: ['strict'],
     externalHelpers: true
 };
