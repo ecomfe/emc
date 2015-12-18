@@ -121,6 +121,7 @@ describe('Model', () => {
             model.on('beforechange', beforeChange);
             model.set('x', 2, { silent: true });
             expect(beforeChange).not.toHaveBeenCalled();
+            expect(model.get('x')).toBe(2);
         });
 
         it('should not change value if beforechange event is default prevented', () => {

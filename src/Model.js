@@ -414,47 +414,56 @@ export default class Model extends EventTarget {
     [SET_VALUE](name, value, options, diff) {
         let oldValue = this[STORE][name];
         let isValueChanged = !this.has(name) || oldValue !== value;
-        if (isValueChanged && !options.silent) {
-            let eventData = {
-                name: name,
-                changeType: this[STORE].hasOwnProperty(name) ? 'change' : 'add',
-                oldValue: oldValue,
-                newValue: value,
-                actualValue: value,
-                diff: diff
-            };
+        if (!isValueChanged) {
+            return;
+        }
 
-            /**
-             * Firs before a property is to be changed.
-             *
-             * The `beforechange` event is available for both `set` and `update` method,
-             * for `update` method it fires for each property change.
-             *
-             * If a `beforechange` event is originated from a `update` method, it provides a `diff` property.
-             *
-             * You can use `event.preventDefault()` to cancel the assignment of a property, no `change` will fire then.
-             *
-             * You can also set `event.actualValue` to change the final value of assignment,
-             * note if you do this, the `diff` property `update` method generates is lost,
-             * we do not provide a generic object diff due to performance considerations.
-             *
-             * @event Model#beforechange
-             *
-             * @property {string} name The name of property.
-             * @property {string} changeType The type of change, could be `"add"`, `"change"` or `"remove"`
-             * @property {*} oldValue The old value of property.
-             * @property {*} newValue The new value of property.
-             * @property {Object} [diff] A diff between the old and new value, only available for `update` method.
-             * @property {*} actualValue The actual value of prpoerty,
-             *     we can change this property to modified the value of the final set operation.
-             */
-            let event = this.fire('beforechange', eventData);
+        let changeType = this[STORE].hasOwnProperty(name) ? 'change' : 'add';
 
-            if (!event.isDefaultPrevented()) {
-                // Discard diff if `actualValue` is changed in event handlers.
-                let actualDiff = event.actualValue === value ? diff : undefined;
-                this[ASSIGN_VALUE](name, event.actualValue, event.changeType, options, actualDiff);
-            }
+        if (options.silent) {
+            this[ASSIGN_VALUE](name, value, changeType, options, diff);
+            return;
+        }
+
+        let eventData = {
+            name: name,
+            changeType: changeType,
+            oldValue: oldValue,
+            newValue: value,
+            actualValue: value,
+            diff: diff
+        };
+
+        /**
+         * Firs before a property is to be changed.
+         *
+         * The `beforechange` event is available for both `set` and `update` method,
+         * for `update` method it fires for each property change.
+         *
+         * If a `beforechange` event is originated from a `update` method, it provides a `diff` property.
+         *
+         * You can use `event.preventDefault()` to cancel the assignment of a property, no `change` will fire then.
+         *
+         * You can also set `event.actualValue` to change the final value of assignment,
+         * note if you do this, the `diff` property `update` method generates is lost,
+         * we do not provide a generic object diff due to performance considerations.
+         *
+         * @event Model#beforechange
+         *
+         * @property {string} name The name of property.
+         * @property {string} changeType The type of change, could be `"add"`, `"change"` or `"remove"`
+         * @property {*} oldValue The old value of property.
+         * @property {*} newValue The new value of property.
+         * @property {Object} [diff] A diff between the old and new value, only available for `update` method.
+         * @property {*} actualValue The actual value of prpoerty,
+         *     we can change this property to modified the value of the final set operation.
+         */
+        let event = this.fire('beforechange', eventData);
+
+        if (!event.isDefaultPrevented()) {
+            // Discard diff if `actualValue` is changed in event handlers.
+            let actualDiff = event.actualValue === value ? diff : undefined;
+            this[ASSIGN_VALUE](name, event.actualValue, event.changeType, options, actualDiff);
         }
     }
 
