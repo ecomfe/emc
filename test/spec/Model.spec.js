@@ -581,13 +581,11 @@ describe('Model', () => {
             let change = jasmine.createSpy('change');
             rectangle.on('change', change);
             rectangle.update({width: {$set: 3}, height: {$set: 4}});
-            expect(change.calls.count()).toBe(6); // width + height + perimeter * 2 + size * 2
-            let changeEvents = change.calls.all().filter(e => e.args[0].name === 'size');
-            expect(changeEvents.length).toBe(2);
-            expect(changeEvents[0].args[0].oldValue).toBe('2*3');
-            expect(changeEvents[0].args[0].newValue).toBe('3*3');
-            expect(changeEvents[1].args[0].oldValue).toBe('3*3');
-            expect(changeEvents[1].args[0].newValue).toBe('3*4');
+            expect(change.calls.count()).toBe(4); // width + height + perimeter + size
+            let changeEvent = change.calls.all().filter(e => e.args[0].name === 'size')[0];
+            expect(changeEvent).not.toBeUndefined();
+            expect(changeEvent.args[0].oldValue).toBe('2*3');
+            expect(changeEvent.args[0].newValue).toBe('3*4');
         });
 
         it('should fire change event for dependencies when set', () => {

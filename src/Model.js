@@ -18,7 +18,7 @@ const STORE = Symbol('store');
 const COMPUTED_PROPERTIES = Symbol('computedProperties');
 const DIFF = Symbol('diff');
 const OLD_VALUES = Symbol('oldValues');
-const SUPRESS_COMPUTED_PROPERTY_CHANGE = Symbol('supressComputedPropertyChange');
+const SUPRESS_COMPUTED_PROPERTY_CHANGE_MUTEX = Symbol('supressComputedPropertyChangeMutex');
 const IS_UPDATE_NOTIFICATION_IN_QUEUE = Symbol('asyncTick');
 const HAS_COMPUTED_PROPERTY = Symbol('hasComputedProperty');
 const SET_COMPUTED_PROPERTY = Symbol('setComputedProperty');
@@ -173,7 +173,7 @@ export default class Model extends EventTarget {
         this[STORE] = u.extend({}, initialData);
         this[COMPUTED_PROPERTIES] = {};
         this[IS_UPDATE_NOTIFICATION_IN_QUEUE] = false;
-        this[SUPRESS_COMPUTED_PROPERTY_CHANGE] = false;
+        this[SUPRESS_COMPUTED_PROPERTY_CHANGE_MUTEX] = 0;
         this[DIFF] = {};
         this[OLD_VALUES] = {};
     }
@@ -312,12 +312,16 @@ export default class Model extends EventTarget {
             throw new Error('Argument commands is not provided');
         }
 
+        this[SUPRESS_COMPUTED_PROPERTY_CHANGE_MUTEX]++;
         // We don't allow root command here since it may modify the store to an unexpected value.
-        for (let name of Object.keys(commands)) {
+        let updatingProperties = Object.keys(commands);
+        for (let name of updatingProperties) {
             let currentValue = this[STORE][name];
             let [newValue, diff] = update(currentValue, commands[name]);
             this[SET_VALUE](name, newValue, options, diff);
         }
+        this[SUPRESS_COMPUTED_PROPERTY_CHANGE_MUTEX]--;
+        this[UPDATE_COMPUTED_PROPERTIES_FROM_DEPENDENCY](updatingProperties);
     }
 
     /**
@@ -499,7 +503,7 @@ export default class Model extends EventTarget {
         this.on(
             'change',
             (e) => {
-                if (this[SUPRESS_COMPUTED_PROPERTY_CHANGE]) {
+                if (this[SUPRESS_COMPUTED_PROPERTY_CHANGE_MUTEX]) {
                     return;
                 }
 
@@ -552,9 +556,9 @@ export default class Model extends EventTarget {
             throw new Error(`Cannot set readonly computed property ${name}`);
         }
 
-        this[SUPRESS_COMPUTED_PROPERTY_CHANGE] = true;
+        this[SUPRESS_COMPUTED_PROPERTY_CHANGE_MUTEX]++;
         this::set(value, options);
-        this[SUPRESS_COMPUTED_PROPERTY_CHANGE] = false;
+        this[SUPRESS_COMPUTED_PROPERTY_CHANGE_MUTEX]--;
         this[UPDATE_COMPUTED_PROPERTIES_FROM_DEPENDENCY](dependencies);
     }
 
