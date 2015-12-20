@@ -23,6 +23,12 @@
   "license": "BSD",
   "readme": "README.md",
   "devDependencies": {
+    "babel-core": "^6.3.21",
+    "babel-plugin-transform-es2015-modules-umd": "^6.3.13",
+    "babel-preset-es2015": "^6.3.13",
     "esdoc-es7-plugin": "0.0.3"
+  },
+  "scripts": {
+    "build": "babel src -d dist"
   }
 }
