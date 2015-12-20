@@ -521,7 +521,8 @@ describe('Model', () => {
                         let [width, height] = value ? value.split('*').map(Number) : [undefined, undefined];
                         this.set('width', width, options);
                         this.set('height', height, options);
-                    }
+                    },
+                    evaluate: true
                 }
 
             );
@@ -530,10 +531,18 @@ describe('Model', () => {
                 'perimeter',
                 ['width', 'height'],
                 function () {
-                    if (!this.has('width') || !this.has('height')) {
-                        return undefined;
-                    }
                     return this.get('width') * 2 + this.get('height') * 2;
+                }
+            );
+
+            this.defineComputedProperty(
+                'shorterEdge',
+                ['width', 'height'],
+                {
+                    get() {
+                        return Math.min(this.get('width'), this.get('height'));
+                    },
+                    evaluate: true
                 }
             );
         }
@@ -569,7 +578,7 @@ describe('Model', () => {
             let change = jasmine.createSpy('change');
             rectangle.on('change', change);
             rectangle.set('width', 3);
-            expect(change.calls.count()).toBe(3); // width + perimeter + size
+            expect(change.calls.count()).toBe(4); // width + perimeter + size + shorterEdge
             let changeEvent = change.calls.all().filter(e => e.args[0].name === 'size')[0];
             expect(changeEvent).not.toBeUndefined();
             expect(changeEvent.args[0].oldValue).toBe('2*3');
@@ -581,7 +590,7 @@ describe('Model', () => {
             let change = jasmine.createSpy('change');
             rectangle.on('change', change);
             rectangle.update({width: {$set: 3}, height: {$set: 4}});
-            expect(change.calls.count()).toBe(4); // width + height + perimeter + size
+            expect(change.calls.count()).toBe(5); // width + height + perimeter + size + shorterEdge
             let changeEvent = change.calls.all().filter(e => e.args[0].name === 'size')[0];
             expect(changeEvent).not.toBeUndefined();
             expect(changeEvent.args[0].oldValue).toBe('2*3');
@@ -594,7 +603,7 @@ describe('Model', () => {
             rectangle.on('change', change);
             rectangle.set('size', '3*4');
 
-            expect(change.calls.count()).toBe(4); // width + height + perimeter + size
+            expect(change.calls.count()).toBe(5); // width + height + perimeter + size + shorterEdge
 
             let widthChangeEvent = change.calls.all().filter(e => e.args[0].name === 'width')[0];
             expect(widthChangeEvent).not.toBeUndefined();
@@ -608,7 +617,7 @@ describe('Model', () => {
 
             let perimeterChangeEvent = change.calls.all().filter(e => e.args[0].name === 'perimeter')[0];
             expect(perimeterChangeEvent).not.toBeUndefined();
-            expect(perimeterChangeEvent.args[0].oldValue).toBe(10);
+            expect(perimeterChangeEvent.args[0].oldValue).toBe(undefined); // lazy
             expect(perimeterChangeEvent.args[0].newValue).toBe(14);
         });
 
@@ -618,10 +627,10 @@ describe('Model', () => {
             rectangle.on('change', change);
             rectangle.set('size', '3*2');
 
-            expect(change.calls.count()).toBe(3); // Only width + height + size
+            expect(change.calls.count()).toBe(4); // Only width + height + size + shorterEdge
 
-            let perimeterChangeEvent = change.calls.all().filter(e => e.args[0].name === 'perimeter')[0];
-            expect(perimeterChangeEvent).toBeUndefined();
+            let shorterEdgeChangeEvent = change.calls.all().filter(e => e.args[0].name === 'shorterEdge')[0];
+            expect(shorterEdgeChangeEvent).toBeUndefined();
         });
 
         it('should not fire beforechange event when set', () => {
@@ -650,13 +659,18 @@ describe('Model', () => {
                     },
                     perimeter: {
                         $change: 'change',
-                        oldValue: 10,
+                        oldValue: undefined,
                         newValue: 14
                     },
                     size: {
                         $change: 'change',
                         oldValue: '2*3',
                         newValue: '3*4'
+                    },
+                    shorterEdge: {
+                        $change: 'change',
+                        oldValue: 2,
+                        newValue: 3
                     }
                 });
                 done();

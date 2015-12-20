@@ -12,7 +12,6 @@ import update from './update';
 import EventTarget from 'mini-event/EventTarget';
 
 const EMPTY = {};
-const EMPTY_SET = new Set();
 
 const STORE = Symbol('store');
 const COMPUTED_PROPERTIES = Symbol('computedProperties');
@@ -20,6 +19,7 @@ const DIFF = Symbol('diff');
 const OLD_VALUES = Symbol('oldValues');
 const SUPRESS_COMPUTED_PROPERTY_CHANGE_MUTEX = Symbol('supressComputedPropertyChangeMutex');
 const IS_UPDATE_NOTIFICATION_IN_QUEUE = Symbol('asyncTick');
+const HAS_PROPERTY = Symbol('hasProperty');
 const HAS_COMPUTED_PROPERTY = Symbol('hasComputedProperty');
 const SET_COMPUTED_PROPERTY = Symbol('setComputedProperty');
 const UPDATE_COMPUTED_PROPERTY = Symbol('updateComputedProperty');
@@ -196,7 +196,18 @@ export default class Model extends EventTarget {
             throw new Error('Argument name is not provided');
         }
 
-        return this[STORE].hasOwnProperty(name) ? this[STORE][name] : undefined;
+        if (this[STORE].hasOwnProperty(name)) {
+            return this[STORE][name];
+        }
+        else if (this[HAS_COMPUTED_PROPERTY](name)) {
+            // Lazy evaluate computed property if `evaluate` is set to `false`
+            let {get} = this[COMPUTED_PROPERTIES][name];
+            let value = get.call(this);
+            this[STORE][name] = value;
+            return value;
+        }
+
+        return undefined;
     }
 
     /**
@@ -348,7 +359,7 @@ export default class Model extends EventTarget {
             return false;
         }
 
-        return this[STORE].hasOwnProperty(name);
+        return this[HAS_PROPERTY](name);
     }
 
     /**
@@ -483,11 +494,14 @@ export default class Model extends EventTarget {
      * @param {Object|Function} accessorOrGetter A getter function or a descriptor containing meta of the property.
      * @param {Function} accessorOrGetter.get A getter function for computed property.
      * @param {Function} [accessorOrGetter.set] A optional set function for computed property.
+     * @param {boolean} [accessorOrGetter.evaluate] Immediately evaluate the value of this computed property.
      */
     defineComputedProperty(name, dependencies, accessorOrGetter) {
-        let accessor = typeof accessorOrGetter === 'function' ? {get: accessorOrGetter} : accessorOrGetter;
-        let descriptor = Object.assign({name, dependencies}, accessor);
+        let descriptor = typeof accessorOrGetter === 'function' ? {get: accessorOrGetter} : u.clone(accessorOrGetter);
+        descriptor.name = name;
+        descriptor.dependencies = dependencies;
         descriptor.dependencySet = new Set(dependencies);
+        descriptor.evaluate = descriptor.evaluate || false;
 
         // Listen for dependency changes
         this.on(
@@ -505,7 +519,9 @@ export default class Model extends EventTarget {
 
         this[COMPUTED_PROPERTIES][name] = descriptor;
         // Cache initial value, this should not affect update diff
-        this[STORE][name] = descriptor.get.call(this);
+        if (descriptor.evaluate) {
+            this[STORE][name] = descriptor.get.call(this);
+        }
     }
 
     /**
@@ -517,6 +533,18 @@ export default class Model extends EventTarget {
         this[DIFF] = null;
         this[OLD_VALUES] = null;
         this[IS_UPDATE_NOTIFICATION_IN_QUEUE] = false;
+    }
+
+    /**
+     * Determine if specified property exists.
+     *
+     * @private
+     *
+     * @param {string} name Property name.
+     * @return {boolean}
+     */
+    [HAS_PROPERTY](name) {
+        return this[STORE].hasOwnProperty(name) || this[HAS_COMPUTED_PROPERTY](name);
     }
 
     /**
@@ -542,7 +570,7 @@ export default class Model extends EventTarget {
      * @param {boolean} [options.silent] If `true`, no `change` or `update` event is fired.
      */
     [SET_COMPUTED_PROPERTY](name, value, options) {
-        let {set, dependencies, dependencySet} = this[COMPUTED_PROPERTIES][name];
+        let {set, dependencies} = this[COMPUTED_PROPERTIES][name];
 
         if (!set) {
             throw new Error(`Cannot set readonly computed property ${name}`);
@@ -611,7 +639,8 @@ export default class Model extends EventTarget {
             return;
         }
 
-        let changeType = this[STORE].hasOwnProperty(name) ? 'change' : 'add';
+        // We suppose computed properties always have their initial values, despite wether they are lazy or not.
+        let changeType = this[HAS_PROPERTY](name) ? 'change' : 'add';
 
         if (options.silent || options.disableHook) {
             this[ASSIGN_VALUE](name, value, changeType, options, diff);
