@@ -161,7 +161,6 @@ function mergeDiffObject(x, y) {
 /**
  * A Model class is a representation of an object with change notifications.
  *
- * @class Model
  * @extends mini-event.EventTarget
  *
  * @param {Object} [initialData] The initial data which will be filled.
@@ -181,7 +180,6 @@ export default class Model extends EventTarget {
     /**
      * Get the value of property.
      *
-     * @method Model#get
      *
      * @param {string} name The name of property.
      * @return {*} The value of `name` property.
@@ -204,7 +202,6 @@ export default class Model extends EventTarget {
     /**
      * 设置值
      *
-     * @method Model#set
      *
      * @param {string} name The name of property.
      * @param {*} value The value of property.
@@ -212,9 +209,9 @@ export default class Model extends EventTarget {
      * @param {boolean} [options.silent] If `true`, no `change` or `update` event is fired.
      *
      *
-     * @fires beforechange
-     * @fires change
-     * @fires update
+     * @emits beforechange
+     * @emits change
+     * @emits update
      *
      * @throws {Error} Current model instance is disposed.
      * @throws {Error} `name` argument is not provided.
@@ -244,16 +241,15 @@ export default class Model extends EventTarget {
     /**
      * Remove a property.
      *
-     * @method Model#remove
      *
      * @param {string} name The name of property.
      * @param {Object} [options] Extra options.
      * @param {boolean} [options.silent] If `true`, no `change` or `update` event is fired.
      *
      *
-     * @fires beforechange
-     * @fires change
-     * @fires update
+     * @emits beforechange
+     * @emits change
+     * @emits update
      *
      * @throws {Error} Current model instance is disposed.
      * @throws {Error} `name` argument is not provided.
@@ -295,15 +291,14 @@ export default class Model extends EventTarget {
      *
      * We are able to merge diffs generated from multiple updates, so each property path has only one diff result.
      *
-     * @method update
      *
      * @param {Object} commands The update commands, see {@link update} function for detail.
      * @param {Object} [options] Extra options.
      * @param {boolean} [options.silent] If `true`, no `change` or `update` event is fired.
      *
-     * @fires beforechange
-     * @fires change
-     * @fires update
+     * @emits beforechange
+     * @emits change
+     * @emits update
      *
      * @throws {Error} `commands` argument is not provided.
      */
@@ -327,7 +322,6 @@ export default class Model extends EventTarget {
     /**
      * Dump current {@link Model} instance as a plain object.
      *
-     * @method Model#dump
      *
      * @return {Object} A plain object, modifications to the dumped object takes no effect to model instance.
      */
@@ -339,7 +333,6 @@ export default class Model extends EventTarget {
     /**
      * Detect if current {@link Model} instance has a property.
      *
-     * @method Model#has
      *
      * @param {string} name The name of property.
      * @return {boolean}
@@ -361,7 +354,6 @@ export default class Model extends EventTarget {
     /**
      * Detect if current {@link Model} instance has a property whose value is neither `null` nor `undefined`.
      *
-     * @method Model#hasValue
      *
      * @param {string} name The name of property.
      * @return {boolean}
@@ -384,7 +376,6 @@ export default class Model extends EventTarget {
     /**
      * Detect if current {@link Model} instance has a property whose value is neither `null`, `undefined` nor `""`.
      *
-     * @method Model#hasReadableValue
      *
      * @param {string} name The name of property.
      * @return {boolean}
@@ -487,7 +478,6 @@ export default class Model extends EventTarget {
      * Computed properties do not support `beforechange` event, if you need to cancel value assignment or change
      * the actual value, implement it in `set` function.
      *
-     * @protected
      * @param {string} name The name of computed property.
      * @param {string[]} dependencies The dependency properties.
      * @param {Object|Function} accessorOrGetter A getter function or a descriptor containing meta of the property.
@@ -520,8 +510,6 @@ export default class Model extends EventTarget {
 
     /**
      * Dispose current {@link Model} instance.
-     *
-     * @method Model#dispose
      */
     dispose() {
         this.destroyEvents();
@@ -534,6 +522,8 @@ export default class Model extends EventTarget {
     /**
      * Determine if specified computed property exits.
      *
+     * @private
+     *
      * @param {string} name Property name.
      * @return {boolean}
      */
@@ -543,6 +533,8 @@ export default class Model extends EventTarget {
 
     /**
      * Set the value of a computed property.
+     *
+     * @private
      *
      * @param {string} name Property name.
      * @param {*} value Property value.
@@ -565,6 +557,8 @@ export default class Model extends EventTarget {
     /**
      * Update the cached value of a computed property and return the new value.
      *
+     * @private
+     *
      * @param {string} name Property name.
      * @param {Object} [options] Extra options.
      * @param {boolean} [options.silent] If `true`, no `change` or `update` event is fired.
@@ -575,6 +569,13 @@ export default class Model extends EventTarget {
         this[SET_VALUE](name, newValue, Object.assign({disableHook: true}, options));
     }
 
+    /**
+     * Update computed properties from specified dependencies.
+     *
+     * @private
+     *
+     * @param {string[]} dependencies Dependency property names.
+     */
     [UPDATE_COMPUTED_PROPERTIES_FROM_DEPENDENCY](dependencies) {
         let updatingProperties = dependencies.reduce(
             (result, propertyName) => {
@@ -595,7 +596,6 @@ export default class Model extends EventTarget {
      * This is the core logic of `set` and `update` method.
      *
      * @private
-     * @method setValue
      *
      * @param {string} name The name of property.
      * @param {*} value The new value of proeprty.
@@ -666,7 +666,6 @@ export default class Model extends EventTarget {
      * This is the core logic of `SET_VALUE` and `remove` method.
      *
      * @private
-     * @method assignValue
      *
      * @param {string} name The name of property.
      * @param {*} newValue The new value of proeprty.
@@ -722,7 +721,6 @@ export default class Model extends EventTarget {
      * Schedule a task that fires `update` event, only 1 task will be scheduled in a call stack.
      *
      * @private
-     * @method scheduleUpdateEvent
      */
     [SCHEDULE_UPDATE_EVENT]() {
         if (this[IS_UPDATE_NOTIFICATION_IN_QUEUE]) {
@@ -757,7 +755,6 @@ export default class Model extends EventTarget {
      * Merge a diff generated from {@link update} function into all stored update diffs.
      *
      * @private
-     * @method mergeUpdateDiff
      *
      * @param {Object} diff Target diff obejct
      */

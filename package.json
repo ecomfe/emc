@@ -1,25 +1,28 @@
 {
-    "name": "emc",
-    "version": "2.0.0-alpha.1",
-    "description": "EFE model & collection",
-    "main": "Model.js",
-    "edp": {
-        "wwwroot": "/",
-        "depDir": "dep",
-        "srcDir": "src",
-        "loaderAutoConfig": "js,htm,html,tpl,vm,phtml",
-        "loaderUrl": "http://s1.bdstatic.com/r/www/cache/ecom/esl/1-8-2/esl.js",
-        "dependencies": {
-            "underscore": "1.x",
-            "mini-event": "1.x"
-        }
-    },
+  "name": "emc",
+  "version": "2.0.0-alpha.1",
+  "description": "EFE model & collection",
+  "main": "Model.js",
+  "edp": {
+    "wwwroot": "/",
+    "depDir": "dep",
+    "srcDir": "src",
+    "loaderAutoConfig": "js,htm,html,tpl,vm,phtml",
+    "loaderUrl": "http://s1.bdstatic.com/r/www/cache/ecom/esl/1-8-2/esl.js",
     "dependencies": {
-        "underscore": "1.x",
-        "mini-event": "1.x"
-    },
-    "author": "otakustay",
-    "repository": "https://github.com/ecomfe/emc",
-    "license": "BSD",
-    "readme": "README.md"
+      "underscore": "1.x",
+      "mini-event": "1.x"
+    }
+  },
+  "dependencies": {
+    "underscore": "1.x",
+    "mini-event": "1.x"
+  },
+  "author": "otakustay",
+  "repository": "https://github.com/ecomfe/emc",
+  "license": "BSD",
+  "readme": "README.md",
+  "devDependencies": {
+    "esdoc-es7-plugin": "0.0.3"
+  }
 }

@@ -2,3 +2,4 @@ dep
 edp-build-config.js
 doc/api
 test/coverage
+node_modules
