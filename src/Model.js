@@ -1,3 +1,5 @@
+'use strict';
+
 /**
  * EMC (EFE Model & Collection)
  * Copyright 2015 Baidu Inc. All rights reserved.
@@ -29,10 +31,7 @@ const ASSIGN_VALUE = Symbol('assignValue');
 const MERGE_UPDATE_DIFF = Symbol('mergeUpdateDiff');
 const SCHEDULE_UPDATE_EVENT = Symbol('scheduleUpdateEvent');
 
-/* eslint-disable brace-style */
-let global = (function () { return this; }());
-
-let async = global.setImmediate
+let async = setImmediate
     ? function (task) { return setImmediate(task); }
     : function (task) { return setTimeout(task, 0); };
 
@@ -577,7 +576,7 @@ export default class Model extends EventTarget {
         }
 
         this[SUPRESS_COMPUTED_PROPERTY_CHANGE_MUTEX]++;
-        this::set(value, options);
+        set.call(this, value, options);
         this[SUPRESS_COMPUTED_PROPERTY_CHANGE_MUTEX]--;
         this[UPDATE_COMPUTED_PROPERTIES_FROM_DEPENDENCY](dependencies);
     }
@@ -607,15 +606,15 @@ export default class Model extends EventTarget {
     [UPDATE_COMPUTED_PROPERTIES_FROM_DEPENDENCY](dependencies) {
         let updatingProperties = dependencies.reduce(
             (result, propertyName) => {
-                let dependentComputedProperties = Object.values(this[COMPUTED_PROPERTIES])
+                let dependentComputedProperties = u.values(this[COMPUTED_PROPERTIES])
                     .filter(descriptor => descriptor.dependencySet.has(propertyName))
                     .map(descriptor => descriptor.name);
-                dependentComputedProperties.forEach(::result.add);
+                dependentComputedProperties.forEach(result.add.bind(result));
                 return result;
             },
             new Set()
         );
-        updatingProperties.forEach(::this[UPDATE_COMPUTED_PROPERTY]);
+        updatingProperties.forEach(this[UPDATE_COMPUTED_PROPERTY].bind(this));
     }
 
     /**

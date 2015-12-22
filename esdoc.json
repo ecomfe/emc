@@ -3,5 +3,9 @@
     "destination": "./doc/api",
     "plugins": [
         {"name": "esdoc-es7-plugin"}
-    ]
+    ],
+    "manual": {
+        "overview": ["./doc/overview.md"],
+        "usage": ["./doc/how-to-use.md", "./doc/events.md", "./doc/immutability.md", "./doc/computed-properties.md"]
+    }
 }
