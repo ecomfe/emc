@@ -1,6 +1,6 @@
 {
     "name": "emc",
-    "version": "2.0.0-alpha.1",
+    "version": "2.0.0-beta.1",
     "description": "EFE model & collection",
     "main": "src/Model.js",
     "edp": {
@@ -18,7 +18,7 @@
     },
     "dependencies": {
         "diffy-update": "1.x",
-        "mini-event": "1.x",
+        "mini-event": "1.x"
     },
     "author": "otakustay",
     "repository": "https://github.com/ecomfe/emc",
