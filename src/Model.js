@@ -9,7 +9,6 @@
  * @author otakustay
  */
 
-import u from 'underscore';
 import {withDiff as update} from 'diffy-update';
 import EventTarget from 'mini-event/EventTarget';
 
@@ -35,12 +34,34 @@ let async = setImmediate
     ? function (task) { return setImmediate(task); }
     : function (task) { return setTimeout(task, 0); };
 
-function isDiffObject(target) {
-    return target.hasOwnProperty('$change');
-}
+let clone = target => {
+    if (!target) {
+        return target;
+    }
 
-function purgeUneccessaryDiffNode(node) {
-    if (u.isEmpty(node)) {
+    return Object.entries(target).reduce(
+        (result, [key, value]) => {
+            result[key] = value;
+            return result;
+        },
+        {}
+    );
+};
+
+let isEmpty = target => {
+    for (let key in target) {
+        if (target.hasOwnProperty(key)) {
+            return false;
+        }
+    }
+
+    return true;
+};
+
+let isDiffObject = target => target.hasOwnProperty('$change');
+
+let purgeUneccessaryDiffNode = node => {
+    if (isEmpty(node)) {
         return null;
     }
     if (node.$change === 'change' && node.newValue === node.oldValue) {
@@ -168,7 +189,7 @@ export default class Model extends EventTarget {
     constructor(initialData) {
         super();
 
-        this[STORE] = u.extend({}, initialData);
+        this[STORE] = clone(initialData) || {};
         this[COMPUTED_PROPERTIES] = {};
         this[IS_UPDATE_NOTIFICATION_IN_QUEUE] = false;
         this[SUPRESS_COMPUTED_PROPERTY_CHANGE_MUTEX] = 0;
@@ -337,7 +358,7 @@ export default class Model extends EventTarget {
      */
     dump() {
         // Make a shallow copy to ensure future modification will not affect the current model instance.
-        return u.clone(this[STORE]) || {};
+        return clone(this[STORE]) || {};
     }
 
     /**
@@ -415,7 +436,7 @@ export default class Model extends EventTarget {
      * @param {boolean} [accessorOrGetter.evaluate] Immediately evaluate the value of this computed property.
      */
     defineComputedProperty(name, dependencies, accessorOrGetter) {
-        let descriptor = typeof accessorOrGetter === 'function' ? {get: accessorOrGetter} : u.clone(accessorOrGetter);
+        let descriptor = typeof accessorOrGetter === 'function' ? {get: accessorOrGetter} : clone(accessorOrGetter);
         descriptor.name = name;
         descriptor.dependencies = dependencies;
         descriptor.dependencySet = new Set(dependencies);
@@ -525,7 +546,7 @@ export default class Model extends EventTarget {
     [UPDATE_COMPUTED_PROPERTIES_FROM_DEPENDENCY](dependencies) {
         let updatingProperties = dependencies.reduce(
             (result, propertyName) => {
-                let dependentComputedProperties = u.values(this[COMPUTED_PROPERTIES])
+                let dependentComputedProperties = Object.values(this[COMPUTED_PROPERTIES])
                     .filter(descriptor => descriptor.dependencySet.has(propertyName))
                     .map(descriptor => descriptor.name);
                 dependentComputedProperties.forEach(result.add.bind(result));
@@ -633,7 +654,7 @@ export default class Model extends EventTarget {
         }
 
         if (changeType === 'remove') {
-            // `underscore.omit` method has a complexity of O(n),
+            // Method such like `underscore.omit` has a complexity of O(n),
             // since the `store` object is an internal object just owned by model,
             // we use `delete` operator here to gain a little performance boost
             delete this[STORE][name];
@@ -678,7 +699,7 @@ export default class Model extends EventTarget {
             // Do not fire event on disposed model.
             if (this[STORE]) {
                 // Ensure previous loop generates diff, otherwise do not fire event.
-                if (!u.isEmpty(this[DIFF])) {
+                if (!isEmpty(this[DIFF])) {
                     /**
                      * Fires asynchronously after property changes.
                      *
