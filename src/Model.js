@@ -30,9 +30,7 @@ const ASSIGN_VALUE = Symbol('assignValue');
 const MERGE_UPDATE_DIFF = Symbol('mergeUpdateDiff');
 const SCHEDULE_UPDATE_EVENT = Symbol('scheduleUpdateEvent');
 
-let async = setImmediate
-    ? function (task) { return setImmediate(task); }
-    : function (task) { return setTimeout(task, 0); };
+let async = setImmediate ? task => setImmediate(task) : task => setTimeout(task, 0);
 
 let clone = target => {
     if (!target) {
@@ -68,7 +66,7 @@ let purgeUneccessaryDiffNode = node => {
         return null;
     }
     return node;
-}
+};
 
 function mergeDiffNode(stored, merging, newValue, oldValue) {
     // For each diff node, we have a node previously stored (called `stored`)
@@ -445,7 +443,7 @@ export default class Model extends EventTarget {
         // Listen for dependency changes
         this.on(
             'change',
-            (e) => {
+            e => {
                 if (this[SUPRESS_COMPUTED_PROPERTY_CHANGE_MUTEX]) {
                     return;
                 }
