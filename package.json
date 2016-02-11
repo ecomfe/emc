@@ -2,8 +2,9 @@
     "name": "emc",
     "version": "2.0.0-alpha.1",
     "description": "EFE model & collection",
-    "main": "Model.js",
+    "main": "src/Model.js",
     "edp": {
+        "main": "Model.js",
         "wwwroot": "/",
         "depDir": "dep",
         "srcDir": "src",
