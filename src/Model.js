@@ -10,7 +10,7 @@
  */
 
 import u from 'underscore';
-import update from './update';
+import {withDiff as update} from 'diffy-update';
 import EventTarget from 'mini-event/EventTarget';
 
 const EMPTY = {};

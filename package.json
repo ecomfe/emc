@@ -1,34 +1,39 @@
 {
-  "name": "emc",
-  "version": "2.0.0-alpha.1",
-  "description": "EFE model & collection",
-  "main": "Model.js",
-  "edp": {
-    "wwwroot": "/",
-    "depDir": "dep",
-    "srcDir": "src",
-    "loaderAutoConfig": "js,htm,html,tpl,vm,phtml",
-    "loaderUrl": "http://s1.bdstatic.com/r/www/cache/ecom/esl/1-8-2/esl.js",
+    "name": "emc",
+    "version": "2.0.0-alpha.1",
+    "description": "EFE model & collection",
+    "main": "Model.js",
+    "edp": {
+        "wwwroot": "/",
+        "depDir": "dep",
+        "srcDir": "src",
+        "loaderAutoConfig": "js,htm,html,tpl,vm,phtml",
+        "loaderUrl": "http://s1.bdstatic.com/r/www/cache/ecom/esl/1-8-2/esl.js",
+        "dependencies": {
+            "underscore": "1.x",
+            "mini-event": "1.x",
+            "diffy-update": "1.x"
+        },
+        "layout": "v2"
+    },
     "dependencies": {
-      "underscore": "1.x",
-      "mini-event": "1.x"
+        "diffy-update": "1.x",
+        "mini-event": "1.x",
+        "underscore": "1.x"
+    },
+    "author": "otakustay",
+    "repository": "https://github.com/ecomfe/emc",
+    "license": "BSD",
+    "readme": "README.md",
+    "devDependencies": {
+        "babel-core": "^6.3.21",
+        "babel-plugin-transform-es2015-modules-amd": "^6.4.3",
+        "babel-preset-es2015": "^6.3.13",
+        "babel-preset-stage-0": "^6.3.13",
+        "esdoc": "^0.4.4",
+        "esdoc-es7-plugin": "0.0.3"
+    },
+    "scripts": {
+        "build": "babel src -d dist"
     }
-  },
-  "dependencies": {
-    "underscore": "1.x",
-    "mini-event": "1.x"
-  },
-  "author": "otakustay",
-  "repository": "https://github.com/ecomfe/emc",
-  "license": "BSD",
-  "readme": "README.md",
-  "devDependencies": {
-    "babel-core": "^6.3.21",
-    "babel-plugin-transform-es2015-modules-umd": "^6.3.13",
-    "babel-preset-es2015": "^6.3.13",
-    "esdoc-es7-plugin": "0.0.3"
-  },
-  "scripts": {
-    "build": "babel src -d dist"
-  }
 }

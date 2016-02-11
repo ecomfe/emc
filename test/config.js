@@ -32,7 +32,7 @@ module.exports = {
     coverageReporter: {
         // text-summary | text | html | json | teamcity | cobertura | lcov
         // lcovonly | none | teamcity
-        type : 'html',
+        type : 'none',
         dir : 'test/coverage/'
     },
 
