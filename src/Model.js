@@ -10,6 +10,8 @@
  */
 
 import {withDiff as update} from 'diffy-update';
+import {mergeDiff} from 'diffy-update/merge';
+import {createDiffNode} from 'diffy-update/diffNode';
 import EventTarget from 'mini-event/EventTarget';
 
 const EMPTY = {};
@@ -55,126 +57,6 @@ let isEmpty = target => {
 
     return true;
 };
-
-let isDiffObject = target => target.hasOwnProperty('$change');
-
-let purgeUneccessaryDiffNode = node => {
-    if (isEmpty(node)) {
-        return null;
-    }
-    if (node.$change === 'change' && node.newValue === node.oldValue) {
-        return null;
-    }
-    return node;
-};
-
-function mergeDiffNode(stored, merging, newValue, oldValue) {
-    // For each diff node, we have a node previously stored (called `stored`)
-    // and a node provided (called `merging`), it is possible to have many combinations:
-    //
-    // ```
-    // ┌──────────────┬──────────────┬────────────────────────────────────────────┐
-    // │ stored       │ merging      │ action                                     │
-    // ├──────────────┼──────────────┼────────────────────────────────────────────┤
-    // │ missing      │ any          │ use merging                                │
-    // │ any          │ missing      │ no action                                  │
-    // │ diff object  │ diff object  │ merge diff                                 │
-    // │ diff object  │ plain node   │ discard merging, update newValue of stored │
-    // │ plain node   │ diff object  │ use merging, update oldValue of mergine    │
-    // │ plain object │ plain object │ iterate children                           │
-    // └──────────────┴──────────────┴────────────────────────────────────────────┘
-    // ```
-    //
-    // This algorithm may not generate the minimum diff, but is a good balance between complexity and accuracy.
-    if (!stored) {
-        return merging;
-    }
-    if (!merging) {
-        return stored;
-    }
-
-    if (isDiffObject(stored)) {
-        if (isDiffObject(merging)) {
-            return mergeDiffObject(stored, merging);
-        }
-
-        stored.newValue = newValue;
-        return purgeUneccessaryDiffNode(stored);
-    }
-
-    if (isDiffObject(merging)) {
-        merging.oldValue = oldValue;
-        return purgeUneccessaryDiffNode(merging);
-    }
-
-    for (let key of Object.keys(merging)) {
-        let mergedNode = mergeDiffNode(
-            stored[key],
-            merging[key],
-            // It's not possible that `newValue` is `null` or `undefined` but we have a diff for its child key.
-            newValue[key],
-            // The initial value in store could be `null` or `undefined`
-            oldValue ? oldValue[key] : undefined
-        );
-        if (mergedNode) {
-            stored[key] = mergedNode;
-        }
-        else {
-            delete stored[key];
-        }
-    }
-
-    return purgeUneccessaryDiffNode(stored);
-}
-
-function mergeDiffObject(x, y) {
-    if (!x) {
-        return y;
-    }
-    if (!y) {
-        return x;
-    }
-
-    // If a property is added then removed, there should be no diff
-    if (x.$change === 'add' && y.$change === 'remove') {
-        return null;
-    }
-
-    let result = {
-        oldValue: x.oldValue,
-        newValue: y.newValue
-    };
-
-    // Change type is derived as following:
-    //
-    // ```
-    // ┌──────────┬────────┬──────────────┐
-    // │ original │ target │ result       │
-    // ├──────────┼────────┼──────────────┤
-    // │ add      │ add    │ not possible │
-    // │ add      │ change │ add          │
-    // │ add      │ remove │ no change    │
-    // │ change   │ add    │ not possible │
-    // │ change   │ change │ change       │
-    // │ change   │ change │ remove       │
-    // │ remove   │ add    │ change       │
-    // │ remove   │ change │ not possible │
-    // │ remove   │ change │ not possible │
-    // └──────────┴────────┴──────────────┘
-    // ```
-    if (x.$change === 'add') {
-        result.$change = 'add';
-    }
-    else if (y.$change === 'remove') {
-        result.$change = 'remove';
-    }
-    else {
-        result.$change = 'change';
-    }
-
-    // If it happens that `oldValue` and `newValue` are the same, it is not a change anymore
-    return purgeUneccessaryDiffNode(result);
-}
 
 /**
  * A Model class is a representation of an object with change notifications.
@@ -662,7 +544,7 @@ export default class Model extends EventTarget {
         }
 
         let mergingDiff = {
-            [name]: diff || {$change: changeType, oldValue: oldValue, newValue: newValue}
+            [name]: diff || createDiffNode(changeType, oldValue, newValue)
         };
         this[MERGE_UPDATE_DIFF](mergingDiff);
 
@@ -725,7 +607,7 @@ export default class Model extends EventTarget {
      * @param {Object} diff Target diff obejct
      */
     [MERGE_UPDATE_DIFF](diff) {
-        mergeDiffNode(this[DIFF], diff, this[STORE], this[OLD_VALUES]);
+        mergeDiff(this[DIFF], diff, this[OLD_VALUES], this[STORE]);
         this[SCHEDULE_UPDATE_EVENT]();
     }
 }

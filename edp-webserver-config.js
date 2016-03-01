@@ -4,6 +4,7 @@ exports.documentRoot = __dirname;
 
 var BABEL_OPTIONS = {
     presets: ['es2015', 'stage-0'],
+    plugins: ['external-helpers'],
     ast: false
 };
 var babelCore = require('babel-core');

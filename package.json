@@ -11,14 +11,14 @@
         "loaderAutoConfig": "js,htm,html,tpl,vm,phtml",
         "loaderUrl": "http://s1.bdstatic.com/r/www/cache/ecom/esl/1-8-2/esl.js",
         "dependencies": {
-            "mini-event": "1.x",
-            "diffy-update": "1.x"
+            "mini-event": "2.x",
+            "diffy-update": "2.x"
         },
         "layout": "v2"
     },
     "dependencies": {
-        "diffy-update": "1.x",
-        "mini-event": "1.x"
+        "diffy-update": "2.x",
+        "mini-event": "2.x"
     },
     "author": "otakustay",
     "repository": "https://github.com/ecomfe/emc",
@@ -26,6 +26,7 @@
     "readme": "README.md",
     "devDependencies": {
         "babel-core": "^6.3.21",
+        "babel-plugin-external-helpers": "^6.4.0",
         "babel-plugin-transform-es2015-modules-amd": "^6.4.3",
         "babel-preset-es2015": "^6.3.13",
         "babel-preset-stage-0": "^6.3.13",

@@ -232,7 +232,7 @@ describe('Model', () => {
             let update = (e) => {
                 expect(e.diff).toEqual({
                     x: {
-                        $change: 'remove',
+                        changeType: 'remove',
                         oldValue: 1,
                         newValue: undefined
                     }
@@ -399,12 +399,12 @@ describe('Model', () => {
             model.on('update', (e) => {
                 expect(e.diff).toEqual({
                     x: {
-                        $change: 'add',
+                        changeType: 'add',
                         oldValue: undefined,
                         newValue: 2
                     },
                     y: {
-                        $change: 'add',
+                        changeType: 'add',
                         oldValue: undefined,
                         newValue: 2
                     }
@@ -445,7 +445,7 @@ describe('Model', () => {
                 expect(e.diff).toEqual({
                     x: {
                         a: {
-                            $change: 'change',
+                            changeType: 'change',
                             oldValue: 1,
                             newValue: 3
                         }
@@ -462,7 +462,7 @@ describe('Model', () => {
             model.on('update', (e) => {
                 expect(e.diff).toEqual({
                     x: {
-                        $change: 'change',
+                        changeType: 'change',
                         oldValue: {
                             y: {
                                 a: 1,
@@ -483,7 +483,7 @@ describe('Model', () => {
             model.on('update', (e) => {
                 expect(e.diff).toEqual({
                     x: {
-                        $change: 'change',
+                        changeType: 'change',
                         oldValue: {
                             y: {
                                 a: 1,
@@ -648,27 +648,27 @@ describe('Model', () => {
             rectangle.on('update', (e) => {
                 expect(e.diff).toEqual({
                     width: {
-                        $change: 'change',
+                        changeType: 'change',
                         oldValue: 2,
                         newValue: 3
                     },
                     height: {
-                        $change: 'change',
+                        changeType: 'change',
                         oldValue: 3,
                         newValue: 4
                     },
                     perimeter: {
-                        $change: 'change',
+                        changeType: 'change',
                         oldValue: undefined,
                         newValue: 14
                     },
                     size: {
-                        $change: 'change',
+                        changeType: 'change',
                         oldValue: '2*3',
                         newValue: '3*4'
                     },
                     shorterEdge: {
-                        $change: 'change',
+                        changeType: 'change',
                         oldValue: 2,
                         newValue: 3
                     }
