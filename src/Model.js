@@ -1,5 +1,3 @@
-'use strict';
-
 /**
  * EMC (EFE Model & Collection)
  * Copyright 2015 Baidu Inc. All rights reserved.
@@ -59,11 +57,11 @@ let isEmpty = target => {
 };
 
 /**
- * A Model class is a representation of an object with change notifications.
+ * 数据模型类，用于表达一个数据集，同时提供数据变更的通知功能
  *
  * @extends mini-event.EventTarget
  *
- * @param {Object} [initialData] The initial data which will be filled.
+ * @param {Object} [initialData] 初始化数据
  */
 export default class Model extends EventTarget {
     constructor(initialData) {
@@ -78,14 +76,14 @@ export default class Model extends EventTarget {
     }
 
     /**
-     * Get the value of property.
+     * 获取指定属性的值
      *
      *
-     * @param {string} name The name of property.
-     * @return {*} The value of `name` property.
+     * @param {string} name 属性名
+     * @return {*} 属性值
      *
-     * @throws {Error} Current model instance is disposed.
-     * @throws {Error} `name` argument is not provided.
+     * @throws {Error} 当前实例已经销毁了
+     * @throws {Error} 未提供`name`参数
      */
     get(name) {
         if (!this[STORE]) {
@@ -100,7 +98,7 @@ export default class Model extends EventTarget {
             return this[STORE][name];
         }
         else if (this[HAS_COMPUTED_PROPERTY](name)) {
-            // Lazy evaluate computed property if `evaluate` is set to `false`
+            // 如果`evaluate`选项为`false`，则延迟计算属性的取值（默认行为）
             let {get} = this[COMPUTED_PROPERTIES][name];
             let value = get.call(this);
             this[STORE][name] = value;
@@ -114,19 +112,19 @@ export default class Model extends EventTarget {
      * 设置值
      *
      *
-     * @param {string} name The name of property.
-     * @param {*} value The value of property.
-     * @param {Object} [options] Extra options.
-     * @param {boolean} [options.silent] If `true`, no `change` or `update` event is fired.
+     * @param {string} name 属性名
+     * @param {*} value 属性值
+     * @param {Object} [options] 额外选项
+     * @param {boolean} [options.silent] 此选项为`true`时，不会触发`beforechange`、`change`和`update`事件
      *
      *
      * @emits beforechange
      * @emits change
      * @emits update
      *
-     * @throws {Error} Current model instance is disposed.
-     * @throws {Error} `name` argument is not provided.
-     * @throws {Error} `value` argument is not provided.
+     * @throws {Error} 当前实例已经销毁了
+     * @throws {Error} 未提供`name`参数
+     * @throws {Error} 未提供`value`参数
      */
     set(name, value, options = EMPTY) {
         if (!this[STORE]) {
@@ -150,20 +148,19 @@ export default class Model extends EventTarget {
     }
 
     /**
-     * Remove a property.
+     * 删除指定属性
      *
      *
-     * @param {string} name The name of property.
-     * @param {Object} [options] Extra options.
-     * @param {boolean} [options.silent] If `true`, no `change` or `update` event is fired.
-     *
+     * @param {string} name 属性名
+     * @param {Object} [options] 额外选项
+     * @param {boolean} [options.silent] 此选项为`true`时，不会触发`beforechange`、`change`和`update`事件
      *
      * @emits beforechange
      * @emits change
      * @emits update
      *
-     * @throws {Error} Current model instance is disposed.
-     * @throws {Error} `name` argument is not provided.
+     * @throws {Error} 当前实例已经销毁了
+     * @throws {Error} 未提供`name`参数
      */
     remove(name, options = EMPTY) {
         if (!this[STORE]) {
@@ -174,7 +171,7 @@ export default class Model extends EventTarget {
             throw new Error('Argument name is not provided');
         }
 
-        // Do nothing if removal is not neccessary.
+        // 如果本来就没这属性，就提前退出
         if (!this.has(name)) {
             return;
         }
@@ -196,22 +193,22 @@ export default class Model extends EventTarget {
     }
 
     /**
-     * Update this model with a command object.
+     * 使用一个指令对象来更新当前实例
      *
-     * This is a wrap of the {@link update} function except we do not allow root command in this method.
+     * 此方法其实是`diffy-update`工具库的封装，但是不允许对根属性进行操作，即你不可以提供类似`{$set: foo}`的指令
      *
-     * We are able to merge diffs generated from multiple updates, so each property path has only one diff result.
+     * 在多次调用该方法时，会对产生的差异进行合并，在`update`事件中只会体现出一个差异对象
      *
      *
-     * @param {Object} commands The update commands, see {@link update} function for detail.
-     * @param {Object} [options] Extra options.
-     * @param {boolean} [options.silent] If `true`, no `change` or `update` event is fired.
+     * @param {Object} commands 用于更新的指令，具体参考[diffy-update](https://github.com/ecomfe/diffy-update)库的说明
+     * @param {Object} [options] 额外选项
+     * @param {boolean} [options.silent] 此选项为`true`时，不会触发`beforechange`、`change`和`update`事件
      *
      * @emits beforechange
      * @emits change
      * @emits update
      *
-     * @throws {Error} `commands` argument is not provided.
+     * @throws {Error} 未提供`commands`参数
      */
     update(commands, options = EMPTY) {
         if (!commands) {
@@ -219,7 +216,7 @@ export default class Model extends EventTarget {
         }
 
         this[SUPRESS_COMPUTED_PROPERTY_CHANGE_MUTEX]++;
-        // We don't allow root command here since it may modify the store to an unexpected value.
+        // 禁止根属性的修改，不然会直接把`STORE`给改掉
         let updatingProperties = Object.keys(commands);
         for (let name of updatingProperties) {
             let currentValue = this[STORE][name];
@@ -231,24 +228,23 @@ export default class Model extends EventTarget {
     }
 
     /**
-     * Dump current {@link Model} instance as a plain object.
+     * 将当前实例存放的数据导出为一个普通对象
      *
-     *
-     * @return {Object} A plain object, modifications to the dumped object takes no effect to model instance.
+     * @return {Object} 返回一个普通对象，对此对象进行修改不会影响当前`Model`实例
      */
     dump() {
-        // Make a shallow copy to ensure future modification will not affect the current model instance.
+        // 用浅复制避免外部修改导出的对象影响实例
         return clone(this[STORE]) || {};
     }
 
     /**
-     * Detect if current {@link Model} instance has a property.
+     * 判断当前实例是否有指定的属性
      *
      *
-     * @param {string} name The name of property.
+     * @param {string} name 属性名
      * @return {boolean}
      *
-     * @throws {Error} `name` argument is not provided.
+     * @throws {Error} 未提供`name`参数
      */
     has(name) {
         if (!name) {
@@ -263,13 +259,13 @@ export default class Model extends EventTarget {
     }
 
     /**
-     * Detect if current {@link Model} instance has a property whose value is neither `null` nor `undefined`.
+     * 判断当前实例是否有指定的属性，且属性值不为`null`或`undefined`
      *
      *
-     * @param {string} name The name of property.
+     * @param {string} name 属性名
      * @return {boolean}
      *
-     * @throws {Error} `name` argument is not provided.
+     * @throws {Error} 未提供`name`参数
      */
     hasValue(name) {
         if (!name) {
@@ -280,18 +276,18 @@ export default class Model extends EventTarget {
             return false;
         }
 
-        // We do not utilized `this.get` method because a subclass can override it to make this test fail.
+        // 这里不用`this.get`，免得子类重写了`get`后导致判断出问题
         return this.has(name) && this[STORE][name] != null;
     }
 
     /**
-     * Detect if current {@link Model} instance has a property whose value is neither `null`, `undefined` nor `""`.
+     * 判断当前实例是否有指定的属性，且属性值不为`null`、`undefined`或空字符串`""`
      *
      *
-     * @param {string} name The name of property.
+     * @param {string} name 属性名
      * @return {boolean}
      *
-     * @throws {Error} `name` argument is not provided.
+     * @throws {Error} 未提供`name`参数
      */
     hasReadableValue(name) {
         if (!name) {
@@ -306,14 +302,14 @@ export default class Model extends EventTarget {
     }
 
     /**
-     * Define a computed property
+     * 定义一个计算属性
      *
-     * @param {string} name The name of computed property.
-     * @param {string[]} dependencies The dependency properties.
-     * @param {Object|Function} accessorOrGetter A getter function or a descriptor containing meta of the property.
-     * @param {Function} accessorOrGetter.get A getter function for computed property.
-     * @param {Function} [accessorOrGetter.set] A optional set function for computed property.
-     * @param {boolean} [accessorOrGetter.evaluate] Immediately evaluate the value of this computed property.
+     * @param {string} name 计算属性的名称
+     * @param {string[]} dependencies 其依赖的属性集
+     * @param {Object|Function} accessorOrGetter 获取属性值的函数或一个描述对象，描述对象的属性参考如下
+     * @param {Function} accessorOrGetter.get 获取属性值的函数
+     * @param {Function} [accessorOrGetter.set] 设置属性值的函数
+     * @param {boolean} [accessorOrGetter.evaluate] 是否立即计算属性值，默认会在第一次访问或依赖属性变化时计算
      */
     defineComputedProperty(name, dependencies, accessorOrGetter) {
         let descriptor = typeof accessorOrGetter === 'function' ? {get: accessorOrGetter} : clone(accessorOrGetter);
@@ -322,7 +318,7 @@ export default class Model extends EventTarget {
         descriptor.dependencySet = new Set(dependencies);
         descriptor.evaluate = descriptor.evaluate || false;
 
-        // Listen for dependency changes
+        // 监听依赖的变化来重新计算
         this.on(
             'change',
             e => {
@@ -337,14 +333,14 @@ export default class Model extends EventTarget {
         );
 
         this[COMPUTED_PROPERTIES][name] = descriptor;
-        // Cache initial value, this should not affect update diff
+        // 如果要求立即计算，那么计算后存下来，因为是初始值，所以这个不会影响内部存储的差异集的
         if (descriptor.evaluate) {
             this[STORE][name] = descriptor.get.call(this);
         }
     }
 
     /**
-     * Dispose current {@link Model} instance.
+     * 销毁当前实例
      */
     dispose() {
         this.destroyEvents();
@@ -355,11 +351,11 @@ export default class Model extends EventTarget {
     }
 
     /**
-     * Determine if specified property exists.
+     * 判断指定属性是否存在
      *
      * @private
      *
-     * @param {string} name Property name.
+     * @param {string} name 属性名
      * @return {boolean}
      */
     [HAS_PROPERTY](name) {
@@ -367,11 +363,11 @@ export default class Model extends EventTarget {
     }
 
     /**
-     * Determine if specified computed property exits.
+     * 判断指定的计算属性是否存在
      *
      * @private
      *
-     * @param {string} name Property name.
+     * @param {string} name 属性名
      * @return {boolean}
      */
     [HAS_COMPUTED_PROPERTY](name) {
@@ -379,14 +375,14 @@ export default class Model extends EventTarget {
     }
 
     /**
-     * Set the value of a computed property.
+     * 设置计算属性的值
      *
      * @private
      *
-     * @param {string} name Property name.
-     * @param {*} value Property value.
-     * @param {Object} [options] Extra options.
-     * @param {boolean} [options.silent] If `true`, no `change` or `update` event is fired.
+     * @param {string} name 属性名
+     * @param {*} value 属性值
+     * @param {Object} [options] 额外选项
+     * @param {boolean} [options.silent] 此选项为`true`时，不会触发`beforechange`、`change`和`update`事件
      */
     [SET_COMPUTED_PROPERTY](name, value, options) {
         let {set, dependencies} = this[COMPUTED_PROPERTIES][name];
@@ -402,13 +398,13 @@ export default class Model extends EventTarget {
     }
 
     /**
-     * Update the cached value of a computed property and return the new value.
+     * 重新计算一个计算属性的值并更新至当前实例上
      *
      * @private
      *
-     * @param {string} name Property name.
-     * @param {Object} [options] Extra options.
-     * @param {boolean} [options.silent] If `true`, no `change` or `update` event is fired.
+     * @param {string} name 属性名
+     * @param {Object} [options] 额外选项
+     * @param {boolean} [options.silent] 此选项为`true`时，不会触发`beforechange`、`change`和`update`事件
      */
     [UPDATE_COMPUTED_PROPERTY](name, options = EMPTY) {
         let {get} = this[COMPUTED_PROPERTIES][name];
@@ -417,11 +413,11 @@ export default class Model extends EventTarget {
     }
 
     /**
-     * Update computed properties from specified dependencies.
+     * 根据依赖属性来查找并更新所有相关的计算属性
      *
      * @private
      *
-     * @param {string[]} dependencies Dependency property names.
+     * @param {string[]} dependencies 被依赖的属性名称集
      */
     [UPDATE_COMPUTED_PROPERTIES_FROM_DEPENDENCY](dependencies) {
         let updatingProperties = dependencies.reduce(
@@ -438,18 +434,18 @@ export default class Model extends EventTarget {
     }
 
     /**
-     * Set value to a property with an optional diff.
+     * 设置属性值，接受额外的差异对象
      *
-     * This is the core logic of `set` and `update` method.
+     * 此函数为`set`和`update`的核心逻辑
      *
      * @private
      *
-     * @param {string} name The name of property.
-     * @param {*} value The new value of proeprty.
-     * @param {Object} options Extra options.
-     * @param {boolean} [options.silent] If true, no `change` event is fired.
-     * @param {boolean} [options.disableHook] If true, no `beforechange` event is fired, internal use only.
-     * @param {Object} [diff] A optional diff object which describes the modification of property.
+     * @param {string} name 属性名
+     * @param {*} value 属性值
+     * @param {Object} options 额外选项
+     * @param {boolean} [options.silent] 此选项为`true`时，不会触发`beforechange`、`change`和`update`事件
+     * @param {boolean} [options.disableHook] 此选项为`true`时，不会触发`beforechange`事件，该选项仅内部使用
+     * @param {Object} [diff] 可选的差异对象，如果存在则会合并到当前已经存在的差异集中
      */
     [SET_VALUE](name, value, options, diff) {
         let oldValue = this[STORE][name];
@@ -458,7 +454,7 @@ export default class Model extends EventTarget {
             return;
         }
 
-        // We suppose computed properties always have their initial values, despite wether they are lazy or not.
+        // 计算属性无论是不是立即求值的，我们都当它有个初始值，所以懒求值的计算属性第一次变化时旧值就是`undefined`了
         let changeType = this[HAS_PROPERTY](name) ? 'change' : 'add';
 
         if (options.silent || options.disableHook) {
@@ -476,28 +472,24 @@ export default class Model extends EventTarget {
         };
 
         /**
-         * Firs before a property is to be changed.
+         * 在属性值变化前一刻触发
          *
-         * The `beforechange` event is available for both `set` and `update` method,
-         * for `update` method it fires for each property change.
+         * `beforechange`事件会由`set`和`update`方法触发，当使用`update`方法时，每个更新的属性都会触发一次该事件
          *
-         * If a `beforechange` event is originated from a `update` method, it provides a `diff` property.
+         * 如果事件由`update`触发，那么事件对象上会提供一个`diff`属性表达更新的差异
          *
-         * You can use `event.preventDefault()` to cancel the assignment of a property, no `change` will fire then.
+         * 在该事件的处理函数中，可以使用`event.preventDefault()`来阻止后续的属性赋值，阻止后`change`事件就不会触发了
          *
-         * You can also set `event.actualValue` to change the final value of assignment,
-         * note if you do this, the `diff` property `update` method generates is lost,
-         * we do not provide a generic object diff due to performance considerations.
+         * 同时还可以修改`event.actualValue`值来改变实际赋予属性的值，如果`actualValue`被改变了，那么`diff`属性就会失效
          *
          * @event Model#beforechange
          *
-         * @property {string} name The name of property.
-         * @property {string} changeType The type of change, could be `"add"`, `"change"` or `"remove"`
-         * @property {*} oldValue The old value of property.
-         * @property {*} newValue The new value of property.
-         * @property {Object} [diff] A diff between the old and new value, only available for `update` method.
-         * @property {*} actualValue The actual value of prpoerty,
-         *     we can change this property to modified the value of the final set operation.
+         * @property {string} name 属性名
+         * @property {string} changeType 变化的类型，可以为`"add"`、`"change"`或`"remove"`
+         * @property {*} oldValue 属性的旧值
+         * @property {*} newValue 属性的新值
+         * @property {Object} [diff] 属性变化的差异对象
+         * @property {*} actualValue 实际赋予属性的值，修改这个属性可以改变最后的赋值内容
          */
         let event = this.fire('beforechange', eventData);
 
@@ -509,18 +501,18 @@ export default class Model extends EventTarget {
     }
 
     /**
-     * Assign value to a property.
+     * 为指定属性赋值
      *
-     * This is the core logic of `SET_VALUE` and `remove` method.
+     * 这是`SET_VALUE`和`remove`方法的核心逻辑
      *
      * @private
      *
-     * @param {string} name The name of property.
-     * @param {*} newValue The new value of proeprty.
-     * @param {string} changeType The change type, could be `"add"`, `"change"` or `"remove"`.
-     * @param {Object} options Extra options.
-     * @param {boolean} [options.silent] If true, no `change` event is fired.
-     * @param {Object} [diff] A optional diff object which describes the modification of property.
+     * @param {string} name 属性名
+     * @param {*} newValue 属性值
+     * @param {string} changeType 变化的类型，可以为`"add"`、`"change"`或`"remove"`
+     * @param {Object} options 额外选项
+     * @param {boolean} [options.silent] 如果该选项为`true`，则不触发`change`事件.
+     * @param {Object} [diff] 可选的属性变化的差异对象
      */
     [ASSIGN_VALUE](name, newValue, changeType, options, diff) {
         let oldValue = this[STORE][name];
@@ -555,10 +547,10 @@ export default class Model extends EventTarget {
              *
              * @event change
              *
-             * @property {string} name The name of property.
-             * @property {string} changeType The type of change, could be `"add"`, `"change"` or `"remove"`
-             * @property {*} oldValue The old value of property.
-             * @property {*} newValue The new value of property.
+             * @property {string} name 属性名
+             * @property {string} changeType 变化的类型，可以为`"add"`、`"change"`或`"remove"`
+             * @property {*} oldValue 属性的旧值
+             * @property {*} newValue 属性的新值
              * @property {Object} [diff] A diff between the old and new value, only available for `update` method.
              */
             this.fire('change', eventData);
@@ -566,7 +558,7 @@ export default class Model extends EventTarget {
     }
 
     /**
-     * Schedule a task that fires `update` event, only 1 task will be scheduled in a call stack.
+     * 计划一个用于触发`update`事件的任务，使一次`update`事件可以收集多次`set`或`update`等产生的变化
      *
      * @private
      */
@@ -576,17 +568,16 @@ export default class Model extends EventTarget {
         }
 
         let update = () => {
-            // Do not fire event on disposed model.
+            // 如果实例已经销毁就算了
             if (this[STORE]) {
-                // Ensure previous loop generates diff, otherwise do not fire event.
+                // 如果确实有差异就触发`update`事件，没差异就没事件
                 if (!isEmpty(this[DIFF])) {
                     /**
-                     * Fires asynchronously after property changes.
+                     * 在属性变化后异步触发
                      *
-                     * Since this event is asynchronous, it merges all property changes in a loop
-                     * and produces a combined `diff` object.
+                     * 这个事件是异步触发的，所以一个事件循环内所有的数据修改都会收集在一起，并合并成一个差异对象
                      *
-                     * @property {Object} [diff] A combined diff object.
+                     * @property {Object} [diff] 一个事件循环内产生的差异对象
                      */
                     this.fire('update', {diff: this[DIFF]});
                 }
@@ -600,11 +591,11 @@ export default class Model extends EventTarget {
     }
 
     /**
-     * Merge a diff generated from {@link update} function into all stored update diffs.
+     * 将新产生的差异对象合并到已有的差异集上
      *
      * @private
      *
-     * @param {Object} diff Target diff obejct
+     * @param {Object} diff 新产生的差异对象
      */
     [MERGE_UPDATE_DIFF](diff) {
         mergeDiff(this[DIFF], diff, this[OLD_VALUES], this[STORE]);
