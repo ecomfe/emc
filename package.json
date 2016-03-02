@@ -1,6 +1,6 @@
 {
     "name": "emc",
-    "version": "2.0.0-beta.1",
+    "version": "2.1.0",
     "description": "EFE model & collection",
     "main": "src/Model.js",
     "edp": {
@@ -34,6 +34,7 @@
         "esdoc-es7-plugin": "0.0.3"
     },
     "scripts": {
-        "build": "babel src -d dist"
+        "build": "babel src -d dist",
+        "doc": "esdoc -c esdoc.json"
     }
 }
