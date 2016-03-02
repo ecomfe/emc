@@ -71,11 +71,6 @@ describe('Model', () => {
             expect(() => { model.set(null, 1); }).toThrow();
         });
 
-        it('should throw if value is not provided', () => {
-            let model = new Model();
-            expect(() => { model.set('x'); }).toThrow();
-        });
-
         it('should fire beforechange event when change a property', () => {
             let model = new Model();
             model.set('x', 1);

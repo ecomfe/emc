@@ -124,7 +124,6 @@ export default class Model extends EventTarget {
      *
      * @throws {Error} 当前实例已经销毁了
      * @throws {Error} 未提供`name`参数
-     * @throws {Error} 未提供`value`参数
      */
     set(name, value, options = EMPTY) {
         if (!this[STORE]) {
@@ -133,10 +132,6 @@ export default class Model extends EventTarget {
 
         if (!name) {
             throw new Error('Argument name is not provided');
-        }
-
-        if (arguments.length < 2) {
-            throw new Error('Argument value is not provided');
         }
 
         if (this[HAS_COMPUTED_PROPERTY](name)) {
