@@ -1,5 +1,5 @@
-# EMC - a richer model component
+# EMC - 强功能的数据模型
 
-Model is an implement of a structured data, a simple model provies `get` and `set` methods for property accessing and modification, most model implementations also provide events to notify property changes.
+`Model`是指一个特定结构的数据集，因此提供`get`和`set`方法来访问或修改数据，多数`Model`的实现同样会提供数据发生变化时的事件通知机制
 
-EMC tries to provide a richer model implementation such as **change hooks**, **immutability support**, **on-the-way diff**, **computed properties**, these features helps you to control your data more accurate and efficient in rich web applications.
+`emc`期望提供一个功能更为丰富的`Model`实现，其中包含“数据变化钩子”、“不可变数据支持”、“即时计算的差异”、“计算属性”等等，这些功能可以支持一个RIA应用场景下对数据存储和修改的需求，并且拥有更好的可维护性和性能

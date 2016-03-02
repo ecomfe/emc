@@ -1,18 +1,18 @@
-## Events
+## 事件
 
-EMC `Model` class emits 3 types of events.
+`emc`的`Model`会提供3种事件，分别为`change`、`beforechange`和`update`
 
-### change event
+### change事件
 
-The `change` event works in the same way other model implementations provide, it is fired after a property has change its value.
+`change`事件和其它类似的数据模型实现相同，在一个属性的值发生变化后触发
 
-`Model` class uses `===` to test value identity, if a property is of object type, a `change` event will be fired when reference changes even though their content equals to each other.
+在`Model`类的实现中，对值相等的判定使用`===`运算符，所以如果一个属性是对象类型，则引用不同时就会触发`change`事件，并不会检测其内容相同性
 
-### beforechange event
+### beforechange事件
 
-The `beforechange` event fires **before** a property is going to change, this event works as a hook of property changes.
+`beforechange`事件在一个属性发生变化的前一刻触发，这个事件同时是属性变更的一个钩子
 
-In `beforechange` event, you can call `event.preventDefault()` to cancel future value assignment:
+在`beforechange`事件里，可以调用`event.preventDefault()`阻止最后的赋值：
 
 ```js
 import Model from 'emc/Model';
@@ -30,7 +30,7 @@ model.set('name', 'This is a very long name');
 model.get('name'); // undefined
 ```
 
-Also you can change the value in this event by assigning the `actualValue` property of event object:
+还可以修改事件对象中`actualValue`属性的值，来改变最终赋值的内容：
 
 ```js
 import Model from 'emc/Model';
@@ -44,22 +44,22 @@ model.on(
         }
     }
 );
-model.set('name', 'This is a very long name');
-model.get('name'); // undefined
+model.set('age', 22);
+model.get('age'); // 18
 ```
 
-This event enables instant validations and restrictions on properties possible.
+可以在这个事件中进行实时值校验或最大、最小值限制之类的工作
 
 
-### udpate event
+### udpate事件
 
-The `update` event is a special event, it is different with `change` event in some ways:
+`update`事件是`emc`库提供的特殊事件，它和`change`有以下区别：
 
-1. It is fired *asynchronously*.
-2. All property changes are merged together in one `update` event.
-3. All diffs to one property are merged.
+1. 事件是**异步**触发的
+2. 在两次`update`事件之间产生的所有属性的修改会合并在一起
+3. 对同一个属性的多次修改产生的差异对象也会合并为一个
 
-This event provides a `diff` property in event object, suppose we have code like:
+该事件的事件对象中有一个`diff`属性，如果我们有以下的代码：
 
 ```js
 import Model from 'emc/Model';
@@ -78,28 +78,28 @@ model.remove('age');
 model.set('gender', 'male');
 ```
 
-It will produce a `diff` object like:
+`diff`属性会类似这样：
 
 ```js
 {
     name: {
-        $change: 'change',
+        changeType: 'change',
         oldValue: 'Alice',
         newValue: 'Bob'
     },
     age: {
-        $change: 'remove',
+        changeType: 'remove',
         oldValue: 12,
         newValue: undefined
     },
     gender: {
-        $change: 'add',
+        changeType: 'add',
         oldValue: undefined,
         newValue: 'male'
     }
 }
 ```
 
-This `diff` object reports 3 property changes in one event, also the `set` and `remove` calls to `age` property are merged and acts like a simple `remove` call.
+具体的差异对象结构请参考[diffy-update](https://github.com/ecomfe/diffy-update)库的说明
 
-This event can be especially useful in binding senario, rely on `update` event can reduce uneccessary UI updates.
+`update`事件可以应用在数据绑定的场景下，利用其异步特性和属性变化合并的功能来有效减少UI更新的次数

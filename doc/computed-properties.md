@@ -1,16 +1,16 @@
-## Computed Properties
+## 计算属性
 
-Computed Properties are a specially defined property with a `getter` and an optional `setter`, this allows us to have some properties **dynamic** so we don't write property sync codes everywhere.
+计算属性是在数据模型上额外定义的`get`（以及可选的`set`）逻辑，使用计算属性可以创建“动态”的属性，以免除到处写属性之间值同步的逻辑，在代码的可维护性方面有着扮演着重要的角色
 
-### Define a computed property
+### 定义计算属性
 
-We can simply define a computed property with the `defineComputedProperty` method. This method accepts three parameters:
+使用`defineComputedProperty`可以定义计算属性，该函数参数如下：
 
-1. A `name` string representing the name of computed property.
-2. A `dependencies` array contains all dependent properties.
-3. A `getter` function or a `descriptor` object.
+1. `name`字符串指定属性名称
+2. `dependencies`字符串数组指定属性所依赖的其它属性
+3. `getter`函数或一个`descriptor`属性描述对象
 
-A readonly computed property can be defined with a `getter` function:
+如果要定义一个只读的计算属性，第3个参数给出`getter`函数就行了：
 
 ```js
 class Rectangle {
@@ -18,7 +18,7 @@ class Rectangle {
         this.defineComputedProperty(
             'size',
             ['width', 'height'],
-            function () {
+            () => {
                 return this.get('width') + '*' + this.get('height');
             }
         );
@@ -26,11 +26,11 @@ class Rectangle {
 }
 ```
 
-In this way, this model would have a `size` property which updates when `width` or `height` is changed, it returns a string of format `{width} * {height}`.
+这样定义的`size`属性会在`width`或`height`发生变化时自动更新，其值是`{width} * {height}`形式的字符串
 
-The `getter` function receives no arguments with `this` object pointing to current model instance.
+`getter`函数不接收任何参数，其内部的`this`为当前`Model`实例
 
-Also, for a more complex computed property, we can provide a `descriptor` object as the 3rd parameter:
+如果要一个更复杂些的计算属性，可以将第三个参数改为一个属性描述对象：
 
 ```js
 class Rectangle {
@@ -53,33 +53,31 @@ class Rectangle {
 }
 ```
 
-A `descriptor` can contain properties below:
+属性描述对象可以有以下属性:
 
-- A `get` function which executes on read.
-- An optional `set` function which executes on write.
-- An optional `evaluate` boolean property indicates the "laziness" of computed property, we'll talk about it later.
+- `get`属性用于指定读取属性的函数
+- `set`属性用于指定给属性赋值的函数，可选
+- `evaluate`属性用于指定是否立即对属性求值，默认状态下属性会在第一次被读取或者其依赖的属性变化时才求值，使用`evaluate: true`可以让其立即求值
 
-When a computed property is defined without a `set` function, it is a readonly computed property, when any code attempts to write a readonly computed property, it throws an Error saying `Cannot set readonly computed property ${name}`.
+如果一个计算属性定义时没有`set`函数，则它是只读的，对一个只读的计算属性赋值会抛出`Cannot set readonly computed property ${name}`异常
 
-A defined computed property works the same as normal properties, just read it via `get` method and write it via `set` method, any time it's dependencies change it will automaticaly update.
+计算属性和普通属性在使用上是一样的，通过`get`获取值，通过`set`设置值，当其依赖的属性变化时，计算属性的值会自动更新（通过执行`get`获得新值）
 
-### Accessibility of defineComputedProperty method
+### defineComputedProperty的实际可访问性
 
-Although `defineComputedProperty` method is marked as `public`, we strongly recommend just define computed properties inside model implementation, prevent to invoke it from external codes.
+`defineComputedProperty`在文档上的可访问性为`public`，但是我们推荐一个`Model`仅在其内部实现里定义计算属性，不要接收外部的`defineComputedProperty`方法的调用，一个数据模型的结构应该是内部实现对外保持稳定接口的，如果由外部访问`defineComputedProperty`方法随意修改数据结构，会大大降低代码的可维护性
 
-Also it is recommended to define all computed properties inside constructor so that the model can have a definite data structure after constructed, some future improvements (such as precompile) may rely on this.
+同时，也建议在构造函数期间完成所有计算属性的定义，这样在一个实例构造完成后，就拥有完整的属性定义。同时这一原则也有助于日后的一些程序层面的优化（如基于构造函数的分析做预编译等）
 
-### Lazy evaluate
+### 延迟求值
 
-A `descriptor` object can contain an optional `evaluate` property, if this property is set to `true`, the computed property is evaluated immediately when it is defined.
+定义计算属性时提供的`descriptor`属性描述对象可以带有一个`evaluate`属性，如果这个属性的值为`true`，则在属性定义后会立即求值
 
-Since we recommend defining computed properties in constructor, it is possible that dependent properties do not have value when a computed property is defined, lazy evaluation allow us to reduce many `if` branches.
+但是由于我们推荐在构造函数中进行所有计算属性的定义，而此时`Model`本身并不包含任何实际数据，所以立即对计算属性求值会得到不可预期的结果甚至出现异常。使用各种`if`判断依赖的属性值是否满足预期是一种解决方法但会耗费更多的代码。因此在实现上，`emc`支持计算属性的延迟求值，以解决这一问题
 
-The `evaluate` property defaults to `false` so by default computed properties ary "lazy", it's value is evaluated the first time it is read via `get` method, or the first time its dependencies change.
+`evaluate`属性的默认值为`false`，所以所有不特别标识的计算属性都是延迟求值的，其求值时机为第一次通过`get`访问时，或者其依赖的属性第一次发生变化时
 
-A shortcoming of lazy evaluation is the omit of `oldValue` for the first `change` event, the `oldValue` will be `undefined` since it's value is not evaluated. If `oldValue` is important, just specifiy `evaluate` to `true`.
-
-When a computed property requires evaluate immediately, we should carefully handle conditions when dependencies are undefined:
+如果使用延迟求值，那么这个属性第一次`change`事件提供的`oldValue`就会恒定为`undefined`，如果你确实需要`oldValue`作为后续逻辑的输入，那么就必须显式地使用`evaluate: true`配置，同时也需要为此增加部分逻辑来避免上文中所提到的问题：
 
 ```js
 class Rectangle {
@@ -89,7 +87,7 @@ class Rectangle {
             ['width', 'height'],
             {
                 get() {
-                    // Handle when width or height is undefined
+                    // 对于width或height为undefined的场景进行处理
                     if (!this.has('width') || !this.has('height')) {
                         return undefined;
                     }
@@ -102,20 +100,20 @@ class Rectangle {
 }
 ```
 
-### Abou get and set
+### 计算属性的get与set的额外约束
 
-A `get` function of computed property **SHOULD** be:
+一个计算属性的`get`函数**应当**满足以下约束：
 
-1. Stable - multiple `get` calls should return the same value if model's state is not changed.
-2. Side effect free - `get` calls should not manipulate any state of the model instance.
+1. 稳定性：在`Model`实例状态未变化的情况下，多次访问`get`应该返回相同（绝对的引用相等）的值
+2. 无副作用：调用`get`不应该修改当前`Model`实例或任何外部状态
 
 
-A `set` function of computed property **SHOULD** be:
+相对的，计算属性的`set`函数**应当**满足以下约束：
 
-1. Paired with get - an immediate `get` call after `set` should get an equal value of `set`'s parameter.
-2. Include hook: computed properties do not support `beforechange` event, so hook it in `set` function.
+1. 与`get`配对：当使用`set`为计算属性赋值后，立即使用`get`获取应该能得到与`set`调用时给的参数相同的值
+2. 主动实现相关钩子：`beforechange`默认不会在计算属性的赋值过程中触发，所以如果需要阻止赋值或修改实际值，则应当在`set`函数中给予实现
 
-Note that the parameter of `set` function may not be the final value of property, a computed property's value is always evaluated via `get` function, so if the property is of type `object`, parameter of `set` function is most likely to be discarded, usally the value will be an new object with identical content.
+需要注意的是，由于`set`函数是自定义的，其通常修改的是计算属性所依赖的属性，所以最后计算属性的值不一定会是`set`调用时给的参数。计算属性的值始终由调用`get`函数得到，所以假设`set`时接受的是一个对象，那么很可能完成赋值后实际通过`get`得到的是一个“内容一致但引用不同的新对象”，这一逻辑与上文提到的“`set`函数与`get`函数配对”存在一定的矛盾，需要进行妥善的处理和权衡：
 
 ```js
 class User {
@@ -142,9 +140,9 @@ user.set('name', name);
 user.get(name) === name; // false
 ```
 
-### Practices
+### 推荐实践
 
-For a computed with multiple dependencies, set dependencies one by one can cause multiple `change` events:
+如果一个计算属性有多个依赖属性，对这些属性一个接一个地赋值会造成多个`change`事件，并引起计算属性多次求值：
 
 ```js
 let rectangle = new Rectangle({width: 2, height: 3});
@@ -158,7 +156,7 @@ rectangle.set('height', 4);
 // size 3*3 3*4
 ```
 
-This is not expected behavior, a good practice is to use `upadte` method to reduces change events:
+这个大部分时候不符合我们的预期，多次`change`事件如果反应到UI的更新上会带来不好的用户体验。此时可以使用`update`方法同时对多个属性进行更新，以去除多余的`change`事件：
 
 ```js
 let rectangle = new Rectangle({width: 2, height: 3});
@@ -170,15 +168,15 @@ rectangle.update({width: {$set: 3}, height: {$set: 4}});
 // size undefined 3*4
 ```
 
-### Don'ts
+### 应当避免的实践
 
-Do not update computed property and its dependencies together in one `update` call:
+千万不要在`update`方法中同时更新计算属性和它的依赖 属性：
 
 ```js
 let rectangle = new Rectangle({width: 2, height: 3});
-rectangle.update({size: {$set: '3*4'}, width: {$set: 5}});
+rectangle.update({size: {$set: '3*4'}, width: {$set: 5}}); // 别这么干！
 ```
 
-This can cause unpredictable behavior.
+其实`emc`的开发者也不知道这么干会发生啥，所以请自重
 
-Also, try to prevent `{silent: true}` set on computed properties or their dependencies, this can cause value updates to stop working.
+同时，不要在给计算属性的依赖属性赋值时使用`silent: true`配置，这会阻止相应的`change`事件产生从而导致计算属性无法更新

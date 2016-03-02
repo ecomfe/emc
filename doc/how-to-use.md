@@ -1,20 +1,16 @@
-## How to use
+## 如何使用
 
-EMC is written with some edge ECMAScript features, so it doesn't work in most JavaScript environment, we should transform it to more standard ES5 code first.
+`emc`由ES Next代码编写，所以在当前常见的JavaScript环境下无法运行，需要使用工具将其转为ES5代码
 
-Here is a list of language features EMC uses beyond ES5:
+在`emc`中有使用到以下新的语言特性：
 
-- `let` and `const` variable declarations.
-- `Symbol` for private members.
-- `for .. of` iteration syntax.
-- `class` syntax.
-- `import` and `export` ES6 module syntax.
-- `Set` class.
-- Parameter default values.
-- Arrow function syntax.
+- `let`及`const`关键字
+- `Symbol`定义私有方法
+- `for .. of`循环语法
+- `class`关键字
+- `import`及`export`关键字
+- `Set`类
+- 函数参数默认值
+- 箭头函数
 
-When imported from a package manager such as npm, a `dist` directory will contain a UMD version runnable source for quick use. We can also run `npm run build` on source to get the `dist` directory.
-
-We using [babel](https://babeljs.io) to build your customized version, the [es2015 preset](http://babeljs.io/docs/plugins/preset-es2015/) is a minimun requirement, use a different module plugin such as [es2015-modules-amd](http://babeljs.io/docs/plugins/transform-es2015-modules-amd/) to transform code to your destination module system.
-
-It is also recommended to integrate babel in coding environment including dev servers and build scripts so we can have a seamless experience.
+建议使用[babel](https://babeljs.io)来转换代码，使用时至少需要[es2015 preset](http://babeljs.io/docs/plugins/preset-es2015/)插件集([diffy-update](https://github.com/ecomfe/diffy-update)需要额外的插件集，具体参考该项目信息），随后可以根据具体运行环境选择对应的模块格式，如[es2015-modules-amd](http://babeljs.io/docs/plugins/transform-es2015-modules-amd/)等
