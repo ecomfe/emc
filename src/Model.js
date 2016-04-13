@@ -30,7 +30,7 @@ const ASSIGN_VALUE = Symbol('assignValue');
 const MERGE_UPDATE_DIFF = Symbol('mergeUpdateDiff');
 const SCHEDULE_UPDATE_EVENT = Symbol('scheduleUpdateEvent');
 
-let async = setImmediate ? task => setImmediate(task) : task => setTimeout(task, 0);
+let async = typeof setImmediate === 'undefined' ? task => setTimeout(task, 0) : task => setImmediate(task);
 
 let clone = target => {
     if (!target) {
