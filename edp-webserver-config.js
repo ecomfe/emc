@@ -2,11 +2,6 @@ exports.port = 8848;
 exports.directoryIndexes = true;
 exports.documentRoot = __dirname;
 
-var BABEL_OPTIONS = {
-    presets: ['es2015', 'stage-0'],
-    plugins: ['external-helpers'],
-    ast: false
-};
 var babelCore = require('babel-core');
 
 exports.getLocations = function () {
@@ -14,9 +9,16 @@ exports.getLocations = function () {
         {
             // All source and spec files
             key: 'source',
+            location: /^\/src\/.+\.js/,
+            handler: [
+                babel({}, {babel: babelCore})
+            ]
+        },
+        {
+            // All source and spec files
             location: /(src|spec)\/.+\.js/,
             handler: [
-                babel(BABEL_OPTIONS, {babel: babelCore})
+                babel({}, {babel: babelCore})
             ]
         },
         {
