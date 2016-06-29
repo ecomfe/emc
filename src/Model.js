@@ -68,7 +68,7 @@ export default class Model extends EventTarget {
         super();
 
         this[STORE] = clone(initialData) || {};
-        this[COMPUTED_PROPERTIES] = {};
+        this[COMPUTED_PROPERTIES] = new Map();
         this[IS_UPDATE_NOTIFICATION_IN_QUEUE] = false;
         this[SUPRESS_COMPUTED_PROPERTY_CHANGE_MUTEX] = 0;
         this[DIFF] = {};
@@ -99,7 +99,7 @@ export default class Model extends EventTarget {
         }
         else if (this[HAS_COMPUTED_PROPERTY](name)) {
             // 如果`evaluate`选项为`false`，则延迟计算属性的取值（默认行为）
-            let {get} = this[COMPUTED_PROPERTIES][name];
+            let get = this[COMPUTED_PROPERTIES].get(name).get;
             let value = get.call(this);
             this[STORE][name] = value;
             return value;
@@ -310,10 +310,9 @@ export default class Model extends EventTarget {
         let descriptor = typeof accessorOrGetter === 'function' ? {get: accessorOrGetter} : clone(accessorOrGetter);
         descriptor.name = name;
         descriptor.dependencies = dependencies;
-        descriptor.dependencySet = new Set(dependencies);
         descriptor.evaluate = descriptor.evaluate || false;
 
-        this[COMPUTED_PROPERTIES][name] = descriptor;
+        this[COMPUTED_PROPERTIES].set(name, descriptor);
         // 如果要求立即计算，那么计算后存下来，因为是初始值，所以这个不会影响内部存储的差异集的
         if (descriptor.evaluate) {
             this[STORE][name] = descriptor.get.call(this);
@@ -352,7 +351,7 @@ export default class Model extends EventTarget {
      * @return {boolean}
      */
     [HAS_COMPUTED_PROPERTY](name) {
-        return this[COMPUTED_PROPERTIES].hasOwnProperty(name);
+        return this[COMPUTED_PROPERTIES].has(name);
     }
 
     /**
@@ -366,7 +365,7 @@ export default class Model extends EventTarget {
      * @param {boolean} [options.silent] 此选项为`true`时，不会触发`beforechange`、`change`和`update`事件
      */
     [SET_COMPUTED_PROPERTY](name, value, options) {
-        let {set, dependencies} = this[COMPUTED_PROPERTIES][name];
+        let {set, dependencies} = this[COMPUTED_PROPERTIES].get(name);
 
         if (!set) {
             throw new Error(`Cannot set readonly computed property ${name}`);
@@ -388,7 +387,7 @@ export default class Model extends EventTarget {
      * @param {boolean} [options.silent] 此选项为`true`时，不会触发`beforechange`、`change`和`update`事件
      */
     [UPDATE_COMPUTED_PROPERTY](name, options = EMPTY) {
-        let {get} = this[COMPUTED_PROPERTIES][name];
+        let get = this[COMPUTED_PROPERTIES].get(name).get;
         let newValue = get.call(this);
         this[SET_VALUE](name, newValue, Object.assign({disableHook: true}, options));
     }
@@ -401,17 +400,45 @@ export default class Model extends EventTarget {
      * @param {string[]} dependencies 被依赖的属性名称集
      */
     [UPDATE_COMPUTED_PROPERTIES_FROM_DEPENDENCY](dependencies) {
-        let updatingProperties = dependencies.reduce(
-            (result, propertyName) => {
-                let dependentComputedProperties = Object.values(this[COMPUTED_PROPERTIES])
-                    .filter(descriptor => descriptor.dependencySet.has(propertyName))
-                    .map(descriptor => descriptor.name);
-                dependentComputedProperties.forEach(property => result.add(property));
-                return result;
-            },
-            new Set()
-        );
-        updatingProperties.forEach(property => this[UPDATE_COMPUTED_PROPERTY](property));
+        let upToDate = new Set(dependencies);
+        let updateAvailable = (descriptors, upToDate) => {
+            let isAvailable = ({name, dependencies}) => {
+                // 首先，如果这个属性已经更新过，就不用更新（在`upToDate`里已经有）
+                //
+                // 其次，如果一个属性能更新，则要其所有的依赖满足以下任一条件：
+                //
+                // 1. 在`upToDate`已经更新完的属性集合里
+                // 2. 不属于计算属性
+                if (upToDate.has(name)) {
+                    return false;
+                }
+
+                let isAvailable = dependencies.every(dep => upToDate.has(dep) || !this[HAS_COMPUTED_PROPERTY](dep));
+                return isAvailable;
+            };
+
+            let availableDescriptors = descriptors.filter(isAvailable);
+
+            if (!availableDescriptors.length) {
+                return;
+            }
+
+            for (let descriptor of availableDescriptors) {
+                this[UPDATE_COMPUTED_PROPERTY](descriptor.name);
+                upToDate.add(descriptor.name);
+            }
+
+            updateAvailable(descriptors, upToDate);
+        };
+
+        let descriptors = [...this[COMPUTED_PROPERTIES].values()];
+
+        this[SUPRESS_COMPUTED_PROPERTY_CHANGE_MUTEX]++;
+
+        updateAvailable(descriptors, new Set());
+
+        this[SUPRESS_COMPUTED_PROPERTY_CHANGE_MUTEX]--;
+
     }
 
     /**

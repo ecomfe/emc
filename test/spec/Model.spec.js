@@ -522,6 +522,25 @@ describe('Model', () => {
 
             );
 
+            // 必须放在`size`定义后面
+            this.defineComputedProperty(
+                'area',
+                ['size'],
+                function () {
+                    let [width, height] = this.get('size').split('*').map(Number);
+                    return width * height;
+                }
+            );
+
+            // 必须放在`perimeter`前面，用于测试顺序
+            this.defineComputedProperty(
+                'perimeterString',
+                ['width', 'perimeter'],
+                function () {
+                    return String(this.get('perimeter'));
+                }
+            );
+
             this.defineComputedProperty(
                 'perimeter',
                 ['width', 'height'],
@@ -573,11 +592,34 @@ describe('Model', () => {
             let change = jasmine.createSpy('change');
             rectangle.on('change', change);
             rectangle.set('width', 3);
-            expect(change.calls.count()).toBe(4); // width + perimeter + size + shorterEdge
+            expect(change.calls.count()).toBe(6); // width + perimeter + size + shorterEdge + area + perimeterString
             let changeEvent = change.calls.all().filter(e => e.args[0].name === 'size')[0];
             expect(changeEvent).not.toBeUndefined();
             expect(changeEvent.args[0].oldValue).toBe('2*3');
             expect(changeEvent.args[0].newValue).toBe('3*3');
+        });
+
+        it('should compute correct value for deep dependent in order', () => {
+            let rectangle = new Rectangle({width: 2, height: 3});
+            let change = jasmine.createSpy('change');
+            rectangle.on('change', change);
+            rectangle.set('width', 3);
+            let changeEvent = change.calls.all().filter(e => e.args[0].name === 'area')[0];
+            expect(changeEvent).not.toBeUndefined();
+            expect(changeEvent.args[0].oldValue).toBe(undefined); // lazy
+            expect(changeEvent.args[0].newValue).toBe(9);
+        });
+
+        it('should compute correct value for deep dependent in reversed order', () => {
+            let rectangle = new Rectangle({width: 2, height: 3});
+            rectangle.set('width', 3); // evaluate perimeter first
+            let change = jasmine.createSpy('change');
+            rectangle.on('change', change);
+            rectangle.set('width', 4);
+            let changeEvent = change.calls.all().filter(e => e.args[0].name === 'perimeterString')[0];
+            expect(changeEvent).not.toBeUndefined();
+            expect(changeEvent.args[0].oldValue).toBe('12'); // lazy
+            expect(changeEvent.args[0].newValue).toBe('14');
         });
 
         it('should fire change event when dependency updates', () => {
@@ -585,7 +627,7 @@ describe('Model', () => {
             let change = jasmine.createSpy('change');
             rectangle.on('change', change);
             rectangle.update({width: {$set: 3}, height: {$set: 4}});
-            expect(change.calls.count()).toBe(5); // width + height + perimeter + size + shorterEdge
+            expect(change.calls.count()).toBe(7); // width + height + perimeter + size + shorterEdge + area + perimeterString
             let changeEvent = change.calls.all().filter(e => e.args[0].name === 'size')[0];
             expect(changeEvent).not.toBeUndefined();
             expect(changeEvent.args[0].oldValue).toBe('2*3');
@@ -598,7 +640,7 @@ describe('Model', () => {
             rectangle.on('change', change);
             rectangle.set('size', '3*4');
 
-            expect(change.calls.count()).toBe(5); // width + height + perimeter + size + shorterEdge
+            expect(change.calls.count()).toBe(7); // width + height + perimeter + size + shorterEdge + area + perimeterString
 
             let widthChangeEvent = change.calls.all().filter(e => e.args[0].name === 'width')[0];
             expect(widthChangeEvent).not.toBeUndefined();
@@ -622,7 +664,7 @@ describe('Model', () => {
             rectangle.on('change', change);
             rectangle.set('size', '3*2');
 
-            expect(change.calls.count()).toBe(4); // Only width + height + size + shorterEdge
+            expect(change.calls.count()).toBe(6); // Only width + height + size + shorterEdge + area + perimeterString
 
             let shorterEdgeChangeEvent = change.calls.all().filter(e => e.args[0].name === 'shorterEdge')[0];
             expect(shorterEdgeChangeEvent).toBeUndefined();
@@ -657,6 +699,11 @@ describe('Model', () => {
                         oldValue: undefined,
                         newValue: 14
                     },
+                    perimeterString: {
+                        changeType: 'change',
+                        oldValue: undefined,
+                        newValue: '14'
+                    },
                     size: {
                         changeType: 'change',
                         oldValue: '2*3',
@@ -666,7 +713,12 @@ describe('Model', () => {
                         changeType: 'change',
                         oldValue: 2,
                         newValue: 3
-                    }
+                    },
+                    area: {
+                        changeType: 'change',
+                        oldValue: undefined,
+                        newValue: 12
+                    },
                 });
                 done();
             });
