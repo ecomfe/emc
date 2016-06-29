@@ -313,20 +313,6 @@ export default class Model extends EventTarget {
         descriptor.dependencySet = new Set(dependencies);
         descriptor.evaluate = descriptor.evaluate || false;
 
-        // 监听依赖的变化来重新计算
-        this.on(
-            'change',
-            e => {
-                if (this[SUPRESS_COMPUTED_PROPERTY_CHANGE_MUTEX]) {
-                    return;
-                }
-
-                if (descriptor.dependencySet.has(e.name)) {
-                    this[UPDATE_COMPUTED_PROPERTY](name);
-                }
-            }
-        );
-
         this[COMPUTED_PROPERTIES][name] = descriptor;
         // 如果要求立即计算，那么计算后存下来，因为是初始值，所以这个不会影响内部存储的差异集的
         if (descriptor.evaluate) {
@@ -420,12 +406,12 @@ export default class Model extends EventTarget {
                 let dependentComputedProperties = Object.values(this[COMPUTED_PROPERTIES])
                     .filter(descriptor => descriptor.dependencySet.has(propertyName))
                     .map(descriptor => descriptor.name);
-                dependentComputedProperties.forEach(result.add.bind(result));
+                dependentComputedProperties.forEach(property => result.add(property));
                 return result;
             },
             new Set()
         );
-        updatingProperties.forEach(this[UPDATE_COMPUTED_PROPERTY].bind(this));
+        updatingProperties.forEach(property => this[UPDATE_COMPUTED_PROPERTY](property));
     }
 
     /**
@@ -549,6 +535,10 @@ export default class Model extends EventTarget {
              * @property {Object} [diff] A diff between the old and new value, only available for `update` method.
              */
             this.fire('change', eventData);
+        }
+
+        if (!this[SUPRESS_COMPUTED_PROPERTY_CHANGE_MUTEX]) {
+            this[UPDATE_COMPUTED_PROPERTIES_FROM_DEPENDENCY]([name]);
         }
     }
 
