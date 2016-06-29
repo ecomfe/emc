@@ -47,11 +47,13 @@ let clone = target => {
 };
 
 let isEmpty = target => {
+    /* eslint-disable fecs-use-for-of */
     for (let key in target) {
         if (target.hasOwnProperty(key)) {
             return false;
         }
     }
+    /* eslint-enable fecs-use-for-of */
 
     return true;
 };
@@ -313,11 +315,44 @@ export default class Model extends EventTarget {
         descriptor.evaluate = descriptor.evaluate || false;
 
         // 如果原来有这个属性的话，要删掉它恢复到初始状态
-        if (this[STORE].hasOwnProperty(name)) {
-            delete this[STORE].name;
+        if (this[HAS_COMPUTED_PROPERTY](name)) {
+            this[COMPUTED_PROPERTIES].delete(name);
+
+            if (this[STORE].hasOwnProperty(name)) {
+                delete this[STORE].name;
+            }
         }
 
         this[COMPUTED_PROPERTIES].set(name, descriptor);
+
+        if (process.env.NODE_ENV !== 'production') {
+            let checkCircularDependency = (root, node = root, path = []) => {
+                let descriptor = this[COMPUTED_PROPERTIES].get(node);
+
+                if (!descriptor) {
+                    return;
+                }
+
+                let dependencies = descriptor.dependencies;
+
+                if (!dependencies) {
+                    return;
+                }
+
+                let currentPath = path.concat(node);
+                if (dependencies.includes(root)) {
+                    let circle = currentPath.concat(root);
+                    let message = `Definition of computed property ${name} causes a circular dependency `
+                        + `in the form of: ${circle.join('->')}, these properties will never be updated `
+                        + 'and any attempt to read them will cause a call stack overflow';
+                    console.warn(message);
+                    return;
+                }
+                dependencies.forEach(next => checkCircularDependency(root, next, currentPath));
+            };
+            checkCircularDependency(name);
+        }
+
         // 如果要求立即计算，那么计算后存下来，因为是初始值，所以这个不会影响内部存储的差异集的
         if (descriptor.evaluate) {
             this[STORE][name] = descriptor.get.call(this);
@@ -405,7 +440,6 @@ export default class Model extends EventTarget {
      * @param {string[]} dependencies 被依赖的属性名称集
      */
     [UPDATE_COMPUTED_PROPERTIES_FROM_DEPENDENCY](dependencies) {
-        let upToDate = new Set(dependencies);
         let updateAvailable = (descriptors, upToDate) => {
             let isAvailable = ({name, dependencies}) => {
                 // 首先，如果这个属性已经更新过，就不用更新（在`upToDate`里已经有）
@@ -436,11 +470,11 @@ export default class Model extends EventTarget {
             updateAvailable(descriptors, upToDate);
         };
 
-        let descriptors = [...this[COMPUTED_PROPERTIES].values()];
+        let descriptors = Array.from(this[COMPUTED_PROPERTIES].values());
 
         this[SUPRESS_COMPUTED_PROPERTY_CHANGE_MUTEX]++;
 
-        updateAvailable(descriptors, new Set());
+        updateAvailable(descriptors, new Set(dependencies));
 
         this[SUPRESS_COMPUTED_PROPERTY_CHANGE_MUTEX]--;
 

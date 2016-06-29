@@ -724,5 +724,24 @@ describe('Model', () => {
             });
             rectangle.set('size', '3*4');
         });
+
+        it('should not update in circular dependencies', () => {
+            let Test = class extends Model {
+                constructor(context) {
+                    super(context);
+
+                    this.defineComputedProperty('a', ['b', 'c'], () => this.get('b') + this.get('c'));
+                    this.defineComputedProperty('b', ['a', 'c'], () => this.get('a') - this.get('c'));
+                }
+            };
+
+            let test = new Test({c: 1});
+            test.set('c', 2);
+            expect(test.get('c')).toBe(2);
+            expect(test.hasValue('a')).toBe(false);
+            expect(test.hasValue('b')).toBe(false);
+            expect(() => test.get('a')).toThrow();
+            expect(() => test.get('b')).toThrow();
+        });
     });
 });
