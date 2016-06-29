@@ -312,6 +312,11 @@ export default class Model extends EventTarget {
         descriptor.dependencies = dependencies;
         descriptor.evaluate = descriptor.evaluate || false;
 
+        // 如果原来有这个属性的话，要删掉它恢复到初始状态
+        if (this[STORE].hasOwnProperty(name)) {
+            delete this[STORE].name;
+        }
+
         this[COMPUTED_PROPERTIES].set(name, descriptor);
         // 如果要求立即计算，那么计算后存下来，因为是初始值，所以这个不会影响内部存储的差异集的
         if (descriptor.evaluate) {
