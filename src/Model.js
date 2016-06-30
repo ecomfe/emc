@@ -66,6 +66,13 @@ let isEmpty = target => {
  * @param {Object} [initialData] 初始化数据
  */
 export default class Model extends EventTarget {
+
+    /**
+     * 构造函数
+     *
+     * @constructs Model
+     * @param {Object} [initialData] 初始化数据，这些数据会被放到实例中并不会触发`change`等事件
+     */
     constructor(initialData) {
         super();
 
