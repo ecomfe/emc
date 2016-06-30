@@ -2,7 +2,7 @@
   "name": "emc",
   "version": "2.2.0",
   "description": "EFE model & collection",
-  "main": "dist/Model.js",
+  "main": "Model.js",
   "edp": {
     "main": "Model.js",
     "wwwroot": "/",
@@ -34,12 +34,18 @@
     "edp-test": "^1.1.1",
     "edp-webserver": "^1.2.6",
     "esdoc": "^0.4.4",
-    "esdoc-es7-plugin": "0.0.3"
+    "esdoc-es7-plugin": "0.0.3",
+    "gulp": "^3.9.1",
+    "gulp-babel": "^6.1.2",
+    "gulp-rename": "^1.2.2",
+    "gulp-replace": "^0.5.4",
+    "gulp-sourcemaps": "^1.6.0",
+    "gulp-uglify": "^1.5.4"
   },
   "scripts": {
     "test": "edp test start --singleRun",
     "doc": "esdoc -c esdoc.json",
-    "compile": "babel -d dist/ src/",
+    "compile": "gulp",
     "prepublish": "npm run compile"
   }
 }
