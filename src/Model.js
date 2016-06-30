@@ -451,11 +451,13 @@ export default class Model extends EventTarget {
             let isAvailable = ({name, dependencies}) => {
                 // 首先，如果这个属性已经更新过，就不用更新（在`upToDate`里已经有）
                 //
-                // 其次，如果一个属性能更新，则要其所有的依赖满足以下任一条件：
+                // 其次，如果这个属性和本次变化的属性没关系（所有依赖都不在`upToDate`里），则不用更新
+                //
+                // 最后，如果一个属性能更新，则要其所有的依赖满足以下任一条件：
                 //
                 // 1. 在`upToDate`已经更新完的属性集合里
                 // 2. 不属于计算属性
-                if (upToDate.has(name)) {
+                if (upToDate.has(name) || !dependencies.some(dep => upToDate.has(dep))) {
                     return false;
                 }
 

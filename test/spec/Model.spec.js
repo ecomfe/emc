@@ -743,5 +743,19 @@ describe('Model', () => {
             expect(() => test.get('a')).toThrow();
             expect(() => test.get('b')).toThrow();
         });
+
+        it('should not change with unrelated property changes', () => {
+            let Test = class extends Model {
+                constructor(context) {
+                    super(context);
+
+                    this.defineComputedProperty('bar', ['foo'], () => this.get('foo') + 1);
+                }
+            };
+
+            let test = new Test();
+            test.set('x', 1);
+            expect(test.hasValue('bar')).toBe(false); // should be uninitialized
+        });
     });
 });
