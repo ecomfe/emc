@@ -40,12 +40,15 @@
     "gulp-rename": "^1.2.2",
     "gulp-replace": "^0.5.4",
     "gulp-sourcemaps": "^1.6.0",
-    "gulp-uglify": "^1.5.4"
+    "gulp-uglify": "^1.5.4",
+    "merge-stream": "^1.0.0",
+    "rimraf": "^2.5.2"
   },
   "scripts": {
     "test": "edp test start --singleRun",
     "doc": "esdoc -c esdoc.json",
-    "compile": "gulp",
+    "compile": "npm run clean && gulp",
+    "clean": "rimraf map Model.js Model.min.js",
     "prepublish": "npm run compile"
   }
 }
