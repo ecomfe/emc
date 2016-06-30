@@ -1,30 +1,45 @@
 var gulp = require('gulp');
+var clean = require('gulp-clean');
 var sourcemaps = require('gulp-sourcemaps');
 var babel = require('gulp-babel');
-var replace = require('gulp-replace');
 var uglify = require('gulp-uglify');
-var rename = require("gulp-rename");
-var merge = require('merge-stream');
+var rename = require('gulp-rename');
 
 gulp.task(
-    'default',
+    'clean',
     function () {
-        var development = gulp.src('src/Model.js')
-            .pipe(replace('process.env.NODE_ENV', '"development"'))
+        return gulp.src(['map', 'Model.js', 'Model.min.js'], {read: false})
+            .pipe(clean());
+    }
+);
+
+gulp.task(
+    'development',
+    ['clean'],
+    function () {
+        process.env.NODE_ENV = 'development';
+
+        return gulp.src('src/Model.js')
             .pipe(sourcemaps.init())
             .pipe(babel())
             .pipe(sourcemaps.write('map'))
             .pipe(gulp.dest('.'));
+    }
+);
 
-        var production = gulp.src('src/Model.js')
-            .pipe(replace('process.env.NODE_ENV', '"production"'))
+gulp.task(
+    'production',
+    ['development'],
+    function () {
+        process.env.NODE_ENV = 'production';
+        return gulp.src('src/Model.js')
             .pipe(sourcemaps.init())
             .pipe(babel())
             .pipe(uglify())
             .pipe(rename({suffix: '.min'}))
             .pipe(sourcemaps.write('map'))
             .pipe(gulp.dest('.'));
-
-        return merge(development, production);
     }
 );
+
+gulp.task('default', ['production']);

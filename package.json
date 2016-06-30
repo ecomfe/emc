@@ -1,54 +1,53 @@
 {
-  "name": "emc",
-  "version": "2.3.1",
-  "description": "EFE model & collection",
-  "main": "Model.js",
-  "edp": {
+    "name": "emc",
+    "version": "2.3.1",
+    "description": "EFE model & collection",
     "main": "Model.js",
-    "wwwroot": "/",
-    "depDir": "dep",
-    "srcDir": "src",
-    "loaderAutoConfig": "js,htm,html,tpl,vm,phtml",
-    "loaderUrl": "http://s1.bdstatic.com/r/www/cache/ecom/esl/1-8-2/esl.js",
-    "dependencies": {
-      "mini-event": "2.x",
-      "diffy-update": "2.x"
+    "edp": {
+        "main": "Model.js",
+        "wwwroot": "/",
+        "depDir": "dep",
+        "srcDir": "src",
+        "loaderAutoConfig": "js,htm,html,tpl,vm,phtml",
+        "loaderUrl": "http://s1.bdstatic.com/r/www/cache/ecom/esl/1-8-2/esl.js",
+        "dependencies": {
+            "mini-event": "2.x",
+            "diffy-update": "2.x"
+        },
+        "layout": "v2"
     },
-    "layout": "v2"
-  },
-  "dependencies": {
-    "diffy-update": "2.x",
-    "mini-event": "2.x"
-  },
-  "author": "otakustay",
-  "repository": "https://github.com/ecomfe/emc",
-  "license": "BSD",
-  "readme": "README.md",
-  "devDependencies": {
-    "babel-cli": "^6.7.7",
-    "babel-core": "^6.3.21",
-    "babel-plugin-transform-es2015-modules-umd": "^6.6.5",
-    "babel-preset-es2015": "^6.3.13",
-    "babel-preset-stage-0": "^6.3.13",
-    "edp": "^1.1.1",
-    "edp-test": "^1.1.1",
-    "edp-webserver": "^1.2.6",
-    "esdoc": "^0.4.4",
-    "esdoc-es7-plugin": "0.0.3",
-    "gulp": "^3.9.1",
-    "gulp-babel": "^6.1.2",
-    "gulp-rename": "^1.2.2",
-    "gulp-replace": "^0.5.4",
-    "gulp-sourcemaps": "^1.6.0",
-    "gulp-uglify": "^1.5.4",
-    "merge-stream": "^1.0.0",
-    "rimraf": "^2.5.2"
-  },
-  "scripts": {
-    "test": "edp test start --singleRun",
-    "doc": "esdoc -c esdoc.json",
-    "compile": "npm run clean && gulp",
-    "clean": "rimraf map Model.js Model.min.js",
-    "prepublish": "npm run compile"
-  }
+    "dependencies": {
+        "diffy-update": "2.x",
+        "mini-event": "2.x"
+    },
+    "author": "otakustay",
+    "repository": "https://github.com/ecomfe/emc",
+    "license": "BSD",
+    "readme": "README.md",
+    "devDependencies": {
+        "babel-cli": "^6.7.7",
+        "babel-core": "^6.3.21",
+        "babel-plugin-transform-es2015-modules-umd": "^6.6.5",
+        "babel-plugin-transform-node-env-inline": "^6.8.0",
+        "babel-preset-es2015": "^6.3.13",
+        "babel-preset-stage-0": "^6.3.13",
+        "edp": "^1.1.1",
+        "edp-test": "^1.1.1",
+        "edp-webserver": "^1.2.6",
+        "esdoc": "^0.4.4",
+        "esdoc-es7-plugin": "0.0.3",
+        "gulp": "^3.9.1",
+        "gulp-babel": "^6.1.2",
+        "gulp-clean": "^0.3.2",
+        "gulp-rename": "^1.2.2",
+        "gulp-sourcemaps": "^1.6.0",
+        "gulp-uglify": "^1.5.4"
+    },
+    "scripts": {
+        "test": "edp test start --singleRun",
+        "doc": "esdoc -c esdoc.json",
+        "compile": "gulp",
+        "clean": "gulp clean",
+        "prepublish": "npm run compile"
+    }
 }

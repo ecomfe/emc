@@ -1,5 +1,5 @@
 {
     "presets": ["es2015"],
-    "plugins": ["transform-function-bind", "transform-es2015-modules-umd"],
+    "plugins": ["transform-es2015-modules-umd", "transform-node-env-inline"],
     "ast": false
 }
