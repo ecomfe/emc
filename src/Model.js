@@ -32,19 +32,7 @@ const SCHEDULE_UPDATE_EVENT = Symbol('scheduleUpdateEvent');
 
 let async = typeof setImmediate === 'undefined' ? task => setTimeout(task, 0) : task => setImmediate(task);
 
-let clone = target => {
-    if (!target) {
-        return target;
-    }
-
-    return Object.entries(target).reduce(
-        (result, [key, value]) => {
-            result[key] = value;
-            return result;
-        },
-        {}
-    );
-};
+let clone = target => Object.assign({}, target);
 
 let isEmpty = target => {
     /* eslint-disable fecs-use-for-of */
@@ -76,7 +64,7 @@ export default class Model extends EventTarget {
     constructor(initialData) {
         super();
 
-        this[STORE] = clone(initialData) || {};
+        this[STORE] = clone(initialData);
         this[COMPUTED_PROPERTIES] = new Map();
         this[IS_UPDATE_NOTIFICATION_IN_QUEUE] = false;
         this[SUPRESS_COMPUTED_PROPERTY_CHANGE_MUTEX] = 0;
@@ -153,7 +141,6 @@ export default class Model extends EventTarget {
 
     /**
      * 删除指定属性
-     *
      *
      * @param {string} name 属性名
      * @param {Object} [options] 额外选项
@@ -238,7 +225,7 @@ export default class Model extends EventTarget {
      */
     dump() {
         // 用浅复制避免外部修改导出的对象影响实例
-        return clone(this[STORE]) || {};
+        return clone(this[STORE]);
     }
 
     /**
