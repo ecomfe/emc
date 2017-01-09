@@ -35,3 +35,7 @@ open doc/api/index.html
 
 - 编译后代码置于根目录，方便NodeJS环境直接引用
 - 添加了计算属性循环依赖的检测，使用`Model.js`会在出现循环依赖时通过`console.warn`提示，`Model.min.js`用于生产环境，无检测功能
+
+### 3.0.0
+
+- 移除所有diff的计算，将依赖从`diffy-update`迁至`san-update`
