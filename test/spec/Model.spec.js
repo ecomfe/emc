@@ -221,22 +221,6 @@ describe('Model', () => {
             model.remove('x');
             expect(model.get('x')).toBe(1);
         });
-
-        it('should fire update event for existing property', (done) => {
-            let model = new Model({x: 1});
-            let update = (e) => {
-                expect(e.diff).toEqual({
-                    x: {
-                        changeType: 'remove',
-                        oldValue: 1,
-                        newValue: undefined
-                    }
-                });
-                done();
-            };
-            model.on('update', update);
-            model.remove('x');
-        });
     });
 
     describe('update method', () => {
@@ -383,117 +367,6 @@ describe('Model', () => {
             expect(model.has('x')).toBe(false)
             expect(model.hasValue('x')).toBe(false)
             expect(model.hasReadableValue('x')).toBe(false)
-        });
-    });
-
-    describe('update event', () => {
-        it('should fire when a property is changed', (done) => {
-            let model = new Model();
-            model.set('x', 1);
-            model.set('y', 2);
-            model.on('update', (e) => {
-                expect(e.diff).toEqual({
-                    x: {
-                        changeType: 'add',
-                        oldValue: undefined,
-                        newValue: 2
-                    },
-                    y: {
-                        changeType: 'add',
-                        oldValue: undefined,
-                        newValue: 2
-                    }
-                });
-                done();
-            });
-            model.set('x', 2);
-        });
-
-        it('should not fire when there is actually no change', (done) => {
-            let model = new Model({x: 1});
-            let update = jasmine.createSpy('update');
-            model.on('update', update);
-            model.set('x', 2);
-            model.set('x', 1);
-            setTimeout(() => {
-                expect(update).not.toHaveBeenCalled();
-                done();
-            }, 10);
-        });
-
-        it('should not fire if a nested property has updates but no changes', (done) => {
-            let o = {z: 1};
-            let model = new Model({x: {y: o}});
-            let update = jasmine.createSpy('update');
-            model.on('update', update);
-            model.update({x: {y: {$merge: {a: 1, b: 2}}}});
-            model.update({x: {y: {$set: o}}});
-            setTimeout(() => {
-                expect(update).not.toHaveBeenCalled();
-                done();
-            }, 10);
-        });
-
-        it('should merge diffs from multiple $set command', (done) => {
-            let model = new Model({x: {a: 1, b: 2}});
-            model.on('update', (e) => {
-                expect(e.diff).toEqual({
-                    x: {
-                        a: {
-                            changeType: 'change',
-                            oldValue: 1,
-                            newValue: 3
-                        }
-                    }
-                });
-                done();
-            });
-            model.update({x: {a: {$set: 2}, b: {$set: 3}}});
-            model.update({x: {a: {$set: 3}, b: {$set: 2}}});
-        });
-
-        it('should merge diff for an update of property after its child prpoerty updates', (done) => {
-            let model = new Model({x: {y: {a: 1, b: 2}}});
-            model.on('update', (e) => {
-                expect(e.diff).toEqual({
-                    x: {
-                        changeType: 'change',
-                        oldValue: {
-                            y: {
-                                a: 1,
-                                b: 2
-                            }
-                        },
-                        newValue: 1
-                    }
-                });
-                done();
-            });
-            model.update({x: {y: {$merge: {c: 3}}}});
-            model.update({x: {$set: 1}});
-        });
-
-        it('should merge diff for an update of property after its parent prpoerty updates', (done) => {
-            let model = new Model({x: {y: {a: 1, b: 2}}});
-            model.on('update', (e) => {
-                expect(e.diff).toEqual({
-                    x: {
-                        changeType: 'change',
-                        oldValue: {
-                            y: {
-                                a: 1,
-                                b: 2
-                            }
-                        },
-                        newValue: {
-                            y: [1]
-                        }
-                    }
-                });
-                done();
-            });
-            model.update({x: {$set: {y: []}}});
-            model.update({x: {y: {$push: 1}}});
         });
     });
 
@@ -678,51 +551,6 @@ describe('Model', () => {
 
             let sizeBeforeChangeEvent = beforeChange.calls.all().filter(e => e.args[0].name === 'size')[0];
             expect(sizeBeforeChangeEvent).toBeUndefined();
-        });
-
-        it('should fire update event', (done) => {
-            let rectangle = new Rectangle({width: 2, height: 3});
-            rectangle.on('update', (e) => {
-                expect(e.diff).toEqual({
-                    width: {
-                        changeType: 'change',
-                        oldValue: 2,
-                        newValue: 3
-                    },
-                    height: {
-                        changeType: 'change',
-                        oldValue: 3,
-                        newValue: 4
-                    },
-                    perimeter: {
-                        changeType: 'change',
-                        oldValue: undefined,
-                        newValue: 14
-                    },
-                    perimeterString: {
-                        changeType: 'change',
-                        oldValue: undefined,
-                        newValue: '14'
-                    },
-                    size: {
-                        changeType: 'change',
-                        oldValue: '2*3',
-                        newValue: '3*4'
-                    },
-                    shorterEdge: {
-                        changeType: 'change',
-                        oldValue: 2,
-                        newValue: 3
-                    },
-                    area: {
-                        changeType: 'change',
-                        oldValue: undefined,
-                        newValue: 12
-                    },
-                });
-                done();
-            });
-            rectangle.set('size', '3*4');
         });
 
         it('should not update in circular dependencies', () => {

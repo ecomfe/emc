@@ -7,19 +7,14 @@
  * @author otakustay
  */
 
-import {withDiff as update} from 'diffy-update';
-import {mergeDiff} from 'diffy-update/merge';
-import {createDiffNode} from 'diffy-update/diffNode';
+import {update} from 'san-update';
 import EventTarget from 'mini-event/EventTarget';
 
 const EMPTY = {};
 
 const STORE = Symbol('store');
 const COMPUTED_PROPERTIES = Symbol('computedProperties');
-const DIFF = Symbol('diff');
-const OLD_VALUES = Symbol('oldValues');
 const SUPRESS_COMPUTED_PROPERTY_CHANGE_MUTEX = Symbol('supressComputedPropertyChangeMutex');
-const IS_UPDATE_NOTIFICATION_IN_QUEUE = Symbol('asyncTick');
 const HAS_PROPERTY = Symbol('hasProperty');
 const HAS_COMPUTED_PROPERTY = Symbol('hasComputedProperty');
 const SET_COMPUTED_PROPERTY = Symbol('setComputedProperty');
@@ -27,24 +22,8 @@ const UPDATE_COMPUTED_PROPERTY = Symbol('updateComputedProperty');
 const UPDATE_COMPUTED_PROPERTIES_FROM_DEPENDENCY = Symbol('updateComputedPropertiesFromDependency');
 const SET_VALUE = Symbol('setValue');
 const ASSIGN_VALUE = Symbol('assignValue');
-const MERGE_UPDATE_DIFF = Symbol('mergeUpdateDiff');
-const SCHEDULE_UPDATE_EVENT = Symbol('scheduleUpdateEvent');
-
-let async = typeof setImmediate === 'undefined' ? task => setTimeout(task, 0) : task => setImmediate(task);
 
 let clone = target => Object.assign({}, target);
-
-let isEmpty = target => {
-    /* eslint-disable fecs-use-for-of */
-    for (let key in target) {
-        if (target.hasOwnProperty(key)) {
-            return false;
-        }
-    }
-    /* eslint-enable fecs-use-for-of */
-
-    return true;
-};
 
 /**
  * 数据模型类，用于表达一个数据集，同时提供数据变更的通知功能
@@ -66,10 +45,7 @@ export default class Model extends EventTarget {
 
         this[STORE] = clone(initialData);
         this[COMPUTED_PROPERTIES] = new Map();
-        this[IS_UPDATE_NOTIFICATION_IN_QUEUE] = false;
         this[SUPRESS_COMPUTED_PROPERTY_CHANGE_MUTEX] = 0;
-        this[DIFF] = {};
-        this[OLD_VALUES] = {};
     }
 
     /**
@@ -144,11 +120,10 @@ export default class Model extends EventTarget {
      *
      * @param {string} name 属性名
      * @param {Object} [options] 额外选项
-     * @param {boolean} [options.silent] 此选项为`true`时，不会触发`beforechange`、`change`和`update`事件
+     * @param {boolean} [options.silent] 此选项为`true`时，不会触发`beforechange`和`change`事件
      *
      * @emits beforechange
      * @emits change
-     * @emits update
      *
      * @throws {Error} 当前实例已经销毁了
      * @throws {Error} 未提供`name`参数
@@ -186,18 +161,14 @@ export default class Model extends EventTarget {
     /**
      * 使用一个指令对象来更新当前实例
      *
-     * 此方法其实是`diffy-update`工具库的封装，但是不允许对根属性进行操作，即你不可以提供类似`{$set: foo}`的指令
+     * 此方法其实是`sany-update`工具库的封装，但是不允许对根属性进行操作，即你不可以提供类似`{$set: foo}`的指令
      *
-     * 在多次调用该方法时，会对产生的差异进行合并，在`update`事件中只会体现出一个差异对象
-     *
-     *
-     * @param {Object} commands 用于更新的指令，具体参考[diffy-update](https://github.com/ecomfe/diffy-update)库的说明
+     * @param {Object} commands 用于更新的指令，具体参考[san-update](https://github.com/ecomfe/san-update)库的说明
      * @param {Object} [options] 额外选项
-     * @param {boolean} [options.silent] 此选项为`true`时，不会触发`beforechange`、`change`和`update`事件
+     * @param {boolean} [options.silent] 此选项为`true`时，不会触发`beforechange`和`change`事件
      *
      * @emits beforechange
      * @emits change
-     * @emits update
      *
      * @throws {Error} 未提供`commands`参数
      */
@@ -211,8 +182,8 @@ export default class Model extends EventTarget {
         let updatingProperties = Object.keys(commands);
         for (let name of updatingProperties) {
             let currentValue = this[STORE][name];
-            let [newValue, diff] = update(currentValue, commands[name]);
-            this[SET_VALUE](name, newValue, options, diff);
+            let newValue = update(currentValue, commands[name]);
+            this[SET_VALUE](name, newValue, options);
         }
         this[SUPRESS_COMPUTED_PROPERTY_CHANGE_MUTEX]--;
         this[UPDATE_COMPUTED_PROPERTIES_FROM_DEPENDENCY](updatingProperties);
@@ -359,9 +330,6 @@ export default class Model extends EventTarget {
     dispose() {
         this.destroyEvents();
         this[STORE] = null;
-        this[DIFF] = null;
-        this[OLD_VALUES] = null;
-        this[IS_UPDATE_NOTIFICATION_IN_QUEUE] = false;
     }
 
     /**
@@ -396,7 +364,7 @@ export default class Model extends EventTarget {
      * @param {string} name 属性名
      * @param {*} value 属性值
      * @param {Object} [options] 额外选项
-     * @param {boolean} [options.silent] 此选项为`true`时，不会触发`beforechange`、`change`和`update`事件
+     * @param {boolean} [options.silent] 此选项为`true`时，不会触发`beforechange`和`change`事件
      */
     [SET_COMPUTED_PROPERTY](name, value, options) {
         let {set, dependencies} = this[COMPUTED_PROPERTIES].get(name);
@@ -418,7 +386,7 @@ export default class Model extends EventTarget {
      *
      * @param {string} name 属性名
      * @param {Object} [options] 额外选项
-     * @param {boolean} [options.silent] 此选项为`true`时，不会触发`beforechange`、`change`和`update`事件
+     * @param {boolean} [options.silent] 此选项为`true`时，不会触发`beforechange`和`change`事件
      */
     [UPDATE_COMPUTED_PROPERTY](name, options = EMPTY) {
         let get = this[COMPUTED_PROPERTIES].get(name).get;
@@ -486,11 +454,10 @@ export default class Model extends EventTarget {
      * @param {string} name 属性名
      * @param {*} value 属性值
      * @param {Object} options 额外选项
-     * @param {boolean} [options.silent] 此选项为`true`时，不会触发`beforechange`、`change`和`update`事件
+     * @param {boolean} [options.silent] 此选项为`true`时，不会触发`beforechange`和`change`事件
      * @param {boolean} [options.disableHook] 此选项为`true`时，不会触发`beforechange`事件，该选项仅内部使用
-     * @param {Object} [diff] 可选的差异对象，如果存在则会合并到当前已经存在的差异集中
      */
-    [SET_VALUE](name, value, options, diff) {
+    [SET_VALUE](name, value, options) {
         let oldValue = this[STORE][name];
         let isValueChanged = !this.has(name) || oldValue !== value;
         if (!isValueChanged) {
@@ -501,7 +468,7 @@ export default class Model extends EventTarget {
         let changeType = this[HAS_PROPERTY](name) ? 'change' : 'add';
 
         if (options.silent || options.disableHook) {
-            this[ASSIGN_VALUE](name, value, changeType, options, diff);
+            this[ASSIGN_VALUE](name, value, changeType, options);
             return;
         }
 
@@ -510,8 +477,7 @@ export default class Model extends EventTarget {
             changeType: changeType,
             oldValue: oldValue,
             newValue: value,
-            actualValue: value,
-            diff: diff
+            actualValue: value
         };
 
         /**
@@ -519,11 +485,9 @@ export default class Model extends EventTarget {
          *
          * `beforechange`事件会由`set`和`update`方法触发，当使用`update`方法时，每个更新的属性都会触发一次该事件
          *
-         * 如果事件由`update`触发，那么事件对象上会提供一个`diff`属性表达更新的差异
-         *
          * 在该事件的处理函数中，可以使用`event.preventDefault()`来阻止后续的属性赋值，阻止后`change`事件就不会触发了
          *
-         * 同时还可以修改`event.actualValue`值来改变实际赋予属性的值，如果`actualValue`被改变了，那么`diff`属性就会失效
+         * 同时还可以修改`event.actualValue`值来改变实际赋予属性的值
          *
          * @event Model#beforechange
          *
@@ -531,15 +495,12 @@ export default class Model extends EventTarget {
          * @property {string} changeType 变化的类型，可以为`"add"`、`"change"`或`"remove"`
          * @property {*} oldValue 属性的旧值
          * @property {*} newValue 属性的新值
-         * @property {Object} [diff] 属性变化的差异对象
          * @property {*} actualValue 实际赋予属性的值，修改这个属性可以改变最后的赋值内容
          */
         let event = this.fire('beforechange', eventData);
 
         if (!event.isDefaultPrevented()) {
-            // Discard diff if `actualValue` is changed in event handlers.
-            let actualDiff = event.actualValue === value ? diff : undefined;
-            this[ASSIGN_VALUE](name, event.actualValue, event.changeType, options, actualDiff);
+            this[ASSIGN_VALUE](name, event.actualValue, event.changeType, options);
         }
     }
 
@@ -555,17 +516,12 @@ export default class Model extends EventTarget {
      * @param {string} changeType 变化的类型，可以为`"add"`、`"change"`或`"remove"`
      * @param {Object} options 额外选项
      * @param {boolean} [options.silent] 如果该选项为`true`，则不触发`change`事件.
-     * @param {Object} [diff] 可选的属性变化的差异对象
      */
-    [ASSIGN_VALUE](name, newValue, changeType, options, diff) {
+    [ASSIGN_VALUE](name, newValue, changeType, options) {
         let oldValue = this[STORE][name];
 
         if (changeType === 'change' && newValue === oldValue) {
             return;
-        }
-
-        if (!this[OLD_VALUES].hasOwnProperty(name)) {
-            this[OLD_VALUES][name] = this[STORE][name];
         }
 
         if (changeType === 'remove') {
@@ -578,13 +534,8 @@ export default class Model extends EventTarget {
             this[STORE][name] = newValue;
         }
 
-        let mergingDiff = {
-            [name]: diff || createDiffNode(changeType, oldValue, newValue)
-        };
-        this[MERGE_UPDATE_DIFF](mergingDiff);
-
         if (!options.silent) {
-            let eventData = {name, changeType, oldValue, newValue, diff};
+            let eventData = {name, changeType, oldValue, newValue};
             /**
              * Fires after a property changes its value.
              *
@@ -594,7 +545,6 @@ export default class Model extends EventTarget {
              * @property {string} changeType 变化的类型，可以为`"add"`、`"change"`或`"remove"`
              * @property {*} oldValue 属性的旧值
              * @property {*} newValue 属性的新值
-             * @property {Object} [diff] A diff between the old and new value, only available for `update` method.
              */
             this.fire('change', eventData);
         }
@@ -602,50 +552,5 @@ export default class Model extends EventTarget {
         if (!this[SUPRESS_COMPUTED_PROPERTY_CHANGE_MUTEX]) {
             this[UPDATE_COMPUTED_PROPERTIES_FROM_DEPENDENCY]([name]);
         }
-    }
-
-    /**
-     * 计划一个用于触发`update`事件的任务，使一次`update`事件可以收集多次`set`或`update`等产生的变化
-     *
-     * @private
-     */
-    [SCHEDULE_UPDATE_EVENT]() {
-        if (this[IS_UPDATE_NOTIFICATION_IN_QUEUE]) {
-            return;
-        }
-
-        let update = () => {
-            // 如果实例已经销毁就算了
-            if (this[STORE]) {
-                // 如果确实有差异就触发`update`事件，没差异就没事件
-                if (!isEmpty(this[DIFF])) {
-                    /**
-                     * 在属性变化后异步触发
-                     *
-                     * 这个事件是异步触发的，所以一个事件循环内所有的数据修改都会收集在一起，并合并成一个差异对象
-                     *
-                     * @property {Object} [diff] 一个事件循环内产生的差异对象
-                     */
-                    this.fire('update', {diff: this[DIFF]});
-                }
-                this[DIFF] = {};
-                this[OLD_VALUES] = {};
-                this[IS_UPDATE_NOTIFICATION_IN_QUEUE] = false;
-            }
-        };
-        async(update);
-        this[IS_UPDATE_NOTIFICATION_IN_QUEUE] = true;
-    }
-
-    /**
-     * 将新产生的差异对象合并到已有的差异集上
-     *
-     * @private
-     *
-     * @param {Object} diff 新产生的差异对象
-     */
-    [MERGE_UPDATE_DIFF](diff) {
-        mergeDiff(this[DIFF], diff, this[OLD_VALUES], this[STORE]);
-        this[SCHEDULE_UPDATE_EVENT]();
     }
 }

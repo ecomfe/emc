@@ -12,12 +12,12 @@
         "loaderUrl": "http://s1.bdstatic.com/r/www/cache/ecom/esl/1-8-2/esl.js",
         "dependencies": {
             "mini-event": "2.x",
-            "diffy-update": "2.x"
+            "san-update": "1.x"
         },
         "layout": "v2"
     },
     "dependencies": {
-        "diffy-update": "2.x",
+        "san-update": "1.x",
         "mini-event": "2.x"
     },
     "author": "otakustay",
